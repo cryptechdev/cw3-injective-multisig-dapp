@@ -5,9 +5,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { VoteInfo, ProposalResponse } from 'types/cw3'
-import { StdFee } from "@cosmjs/stargate";
+import { StdFee } from '@cosmjs/stargate'
 
-const defaultFee: StdFee = { amount: [{ amount: "10000", denom: "ustars" },], gas: "500000" };
+const defaultFee: StdFee = {
+  amount: [{ amount: '10000', denom: 'ustars' }],
+  gas: '500000',
+}
 
 function VoteButtons({
   onVoteYes = () => {},
@@ -108,9 +111,14 @@ const Proposal: NextPage = () => {
 
   const handleVote = async (vote: string) => {
     signingClient
-      ?.execute(walletAddress, multisigAddress, {
-        vote: { proposal_id: parseInt(proposalId), vote },
-      },defaultFee)
+      ?.execute(
+        walletAddress,
+        multisigAddress,
+        {
+          vote: { proposal_id: parseInt(proposalId), vote },
+        },
+        defaultFee
+      )
       .then((response) => {
         setTimestamp(new Date())
         setTransactionHash(response.transactionHash)
@@ -124,9 +132,14 @@ const Proposal: NextPage = () => {
   const handleExecute = async () => {
     setError('')
     signingClient
-      ?.execute(walletAddress, multisigAddress, {
-        execute: { proposal_id: parseInt(proposalId) },
-      }, defaultFee)
+      ?.execute(
+        walletAddress,
+        multisigAddress,
+        {
+          execute: { proposal_id: parseInt(proposalId) },
+        },
+        defaultFee
+      )
       .then((response) => {
         setTimestamp(new Date())
         setTransactionHash(response.transactionHash)
@@ -140,9 +153,14 @@ const Proposal: NextPage = () => {
   const handleClose = async () => {
     setError('')
     signingClient
-      ?.execute(walletAddress, multisigAddress, {
-        close: { proposal_id: parseInt(proposalId) },
-      }, defaultFee)
+      ?.execute(
+        walletAddress,
+        multisigAddress,
+        {
+          close: { proposal_id: parseInt(proposalId) },
+        },
+        defaultFee
+      )
       .then((response) => {
         setTimestamp(new Date())
         setTransactionHash(response.transactionHash)

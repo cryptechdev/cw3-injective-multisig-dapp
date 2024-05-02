@@ -7,11 +7,9 @@ import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { InstantiateResult } from '@cosmjs/cosmwasm-stargate'
 import { InstantiateMsg, Voter } from 'types/cw3'
-import { StdFee } from "@cosmjs/stargate";
 
-const defaultFee: StdFee = { amount: [{ amount: "10000", denom: "ustars" },], gas: "500000" };
-
-const MULTISIG_CODE_ID = parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string)
+const MULTISIG_CODE_ID =
+  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 2081
 
 function AddressRow({ idx, readOnly }: { idx: number; readOnly: boolean }) {
   return (
@@ -94,11 +92,14 @@ const CreateMultisig: NextPage = () => {
 
     const msg = {
       voters,
-      threshold: {absolute_count:{weight: required_weight}},
+      threshold: { absolute_count: { weight: required_weight } },
       max_voting_period,
     }
 
     const label = formEl.label.value.trim()
+
+    console.log('message', msg)
+    console.log('label', label)
 
     // @ebaker TODO: add more validation
     if (!validateNonEmpty(msg, label)) {
@@ -113,18 +114,21 @@ const CreateMultisig: NextPage = () => {
       return
     }
 
+    console.log('validated')
+
     signingClient
-      .instantiate(walletAddress, MULTISIG_CODE_ID, msg, label, defaultFee)
+      .instantiate(walletAddress, MULTISIG_CODE_ID, msg, label, 'auto')
       .then((response: InstantiateResult) => {
+        console.log('response', response)
         setLoading(false)
         if (response.contractAddress.length > 0) {
           setContractAddress(response.contractAddress)
         }
       })
-      .catch((err: any) => {
+      .catch((error: any) => {
         setLoading(false)
-        console.log('err', err)
-        setError(err.message)
+        console.error(error)
+        setError(error.message)
       })
   }
 
@@ -141,8 +145,8 @@ const CreateMultisig: NextPage = () => {
           <table className="w-full mb-8">
             <thead>
               <tr>
-                <th>Address</th>
-                <th>Weight</th>
+                <th className="text-left pb-2">Address</th>
+                <th className="text-left pb-2">Weight</th>
               </tr>
             </thead>
             <tbody>
@@ -150,15 +154,27 @@ const CreateMultisig: NextPage = () => {
                 <AddressRow key={index} idx={index} readOnly={complete} />
               ))}
               <tr>
-                <td colSpan={2} className="text-right">
+                <td
+                  colSpan={2}
+                  className="w-full flex justify-end gap-2 p-2 text-right"
+                >
                   <button
-                    className="btn btn-outline btn-primary btn-md text-md rounded-full"
+                    className="btn btn-outline btn-primary btn-sm text-md rounded-lg"
                     onClick={(e) => {
                       e.preventDefault()
                       setCount(count + 1)
                     }}
                   >
-                    + Add another
+                    + address
+                  </button>
+                  <button
+                    className="btn btn-outline btn-primary btn-sm text-md rounded-lg"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setCount(count - 1)
+                    }}
+                  >
+                    - Address
                   </button>
                 </td>
               </tr>
@@ -168,11 +184,11 @@ const CreateMultisig: NextPage = () => {
           <table className="w-full my-4">
             <thead>
               <tr>
-                <th className="text-left">Threshold</th>
-                <th className="text-left box-border px-2 text-sm">
+                <th className="text-left pb-2">Threshold</th>
+                <th className="text-left box-border px-2 text-sm pb-2">
                   Max Voting Period (seconds)
                 </th>
-                <th className="text-left">Label</th>
+                <th className="text-left pb-2">Label</th>
               </tr>
             </thead>
             <tbody>
@@ -202,7 +218,7 @@ const CreateMultisig: NextPage = () => {
                 </td>
                 <td>
                   <input
-                    className="block box-border m-0 w-full rounded  input input-bordered focus:input-primary"
+                    className="block box-border m-0 w-full rounded input input-bordered focus:input-primary"
                     name="label"
                     type="text"
                     placeholder="My multisig name"
@@ -214,7 +230,7 @@ const CreateMultisig: NextPage = () => {
           </table>
           {!complete && (
             <button
-              className={`btn btn-primary btn-lg font-semibold hover:text-base-100 text-2xl rounded-full w-full ${
+              className={`btn btn-primary btn-lg font-semibold hover:text-base-100 text-2xl rounded-xl w-full ${
                 loading ? 'loading' : ''
               }`}
               style={{ cursor: loading ? 'not-allowed' : 'pointer' }}

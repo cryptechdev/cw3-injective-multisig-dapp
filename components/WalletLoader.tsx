@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { useSigningClient } from 'contexts/cosmwasm'
 import Loader from './Loader'
+import Link from 'next/link'
 
 function WalletLoader({
   children,
@@ -26,12 +27,21 @@ function WalletLoader({
 
   if (walletAddress === '') {
     return (
-      <div className="max-w-full">
-        <h1 className="text-6xl font-bold">
-          Welcome to {process.env.NEXT_PUBLIC_SITE_TITLE}!
+      <div className="max-w-full flex flex-col gap-8">
+        <h1 className="text-4xl font-bold">
+          {process.env.NEXT_PUBLIC_SITE_TITLE}
         </h1>
+        <p className="text-xl">Provided by the Neptune Foundation</p>
 
-        <p className="mt-3 text-2xl">
+        <Link
+          href="https://github.com/CosmWasm/cw-plus/tree/main/packages/cw3"
+          passHref
+          target="blank"
+        >
+          <p className="">Supporting the CW3 Spec: MultiSig/Voting Contracts</p>
+        </Link>
+
+        <p className="text-xl">
           Get started by installing{' '}
           <a
             className="pl-1 link link-primary link-hover"

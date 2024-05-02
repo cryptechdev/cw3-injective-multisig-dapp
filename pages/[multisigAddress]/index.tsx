@@ -48,7 +48,7 @@ const Home: NextPage = () => {
         setLoading(false)
         console.log('err', err)
       })
-  }, [walletAddress, signingClient, multisigAddress, startBefore])
+  }, [walletAddress, signingClient, multisigAddress, startBefore, reversedProposals])
 
   return (
     <WalletLoader loading={reversedProposals.length === 0 && loading}>

@@ -39,7 +39,10 @@ function ContractLabel() {
           d="M9 5l7 7-7 7"
         ></path>
       </svg>
-      <Link href={`/${encodeURIComponent(multisigAddress)}`} className="capitalize hover:underline text-2xl">
+      <Link
+        href={`/${encodeURIComponent(multisigAddress)}`}
+        className="capitalize hover:underline text-2xl"
+      >
         {label}
       </Link>
     </div>
