@@ -15,10 +15,11 @@ function Nav() {
   }
 
   const PUBLIC_SITE_ICON_URL = process.env.NEXT_PUBLIC_SITE_ICON_URL || ''
+  const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-888'
 
   return (
-    <div className="w-screen px-2 md:px-16">
-      <nav className="flex flex-wrap text-center md:text-left md:flex flex-row w-full justify-between items-center">
+    <div className="w-full px-2 md:px-16">
+      <nav className="flex flex-wrap text-center md:text-left md:flex flex-row w-full justify-between items-center py-2">
         <div className="flex items-center">
           <Link href="/">
             {PUBLIC_SITE_ICON_URL.length > 0 ? (
@@ -29,7 +30,6 @@ function Nav() {
                   width={50}
                   alt={'Neptune Foundation Logo'}
                 />
-                <span className="text-xl">Neptune Foundation</span>
               </div>
             ) : (
               <span className="text-2xl">⚛️ </span>
@@ -38,15 +38,18 @@ function Nav() {
         </div>
         <NavContractLabel />
         <ThemeToggle />
-        <div className="flex flex-grow md:flex-grow-0 max-w-full pl-4">
-          <button
-            className={`block btn btn-outline btn-primary w-full max-w-full truncate ${
-              walletAddress.length > 0 ? 'lowercase' : ''
-            }`}
-            onClick={handleConnect}
-          >
-            {walletAddress || 'Connect Wallet'}
-          </button>
+        <div className="flex flex-col text-center">
+          <div className="flex flex-grow md:flex-grow-0 max-w-full pl-4">
+            <button
+              className={`block btn btn-outline btn-primary w-full max-w-full truncate ${
+                walletAddress.length > 0 ? 'lowercase' : ''
+              }`}
+              onClick={handleConnect}
+            >
+              {walletAddress || 'Connect Wallet'}
+            </button>
+          </div>
+          <span>{CHAIN_ID}</span>
         </div>
       </nav>
     </div>

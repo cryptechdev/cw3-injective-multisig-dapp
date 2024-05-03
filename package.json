@@ -12,6 +12,8 @@
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.32.3",
     "@injectivelabs/networks": "^1.14.6",
+    "@injectivelabs/sdk-ts": "^1.14.7",
+    "@keplr-wallet/types": "^0.12.83",
     "daisyui": "^1.14.0",
     "lodash.clonedeep": "^4.5.0",
     "next": "^14.2.3",

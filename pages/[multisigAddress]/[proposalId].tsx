@@ -5,11 +5,77 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { VoteInfo, ProposalResponse } from 'types/cw3'
-import { StdFee } from '@cosmjs/stargate'
 
-const defaultFee: StdFee = {
-  amount: [{ amount: '10000', denom: 'ustars' }],
-  gas: '500000',
+const icons = {
+  bell: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      className="flex-shrink-0 w-6 h-6 ml-2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+      ></path>
+    </svg>
+  ),
+  info: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      className="w-6 h-6 ml-2 stroke-current"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      ></path>
+    </svg>
+  ),
+  warning: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      className="w-6 h-6 ml-2 stroke-current"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      ></path>
+    </svg>
+  ),
+  error: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      className="w-6 h-6 ml-2 stroke-current"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+      ></path>
+    </svg>
+  ),
+  success: (
+    <input
+      type="checkbox"
+      checked={true}
+      readOnly={true}
+      className="checkbox checkbox-accent"
+    />
+  ),
 }
 
 function VoteButtons({
@@ -181,8 +247,26 @@ const Proposal: NextPage = () => {
             </div>
           ) : (
             <div className="container mx-auto max-w-lg text-left">
-              <h1 className="text-3xl font-bold mb-8">{proposal.title}</h1>
-              <p className="mb-8">{proposal.description}</p>
+              <div className="card-title flex flex-row justify-between m-0">
+                <div>{proposal.title}</div>
+                {proposal.status === 'passed' && (
+                  <div className="text-2xl text-warning">{icons.warning}</div>
+                )}
+                {proposal.status === 'rejected' && (
+                  <div className="text-2xl text-error">{icons.error}</div>
+                )}
+                {proposal.status === 'executed' && (
+                  <div className="text-2xl text-success">&#x2713;</div>
+                )}
+                {proposal.status === 'open' && (
+                  <div className="text-2xl text-info">{icons.bell}</div>
+                )}
+              </div>
+              <div className="flex justify-between text-sm text-secondary">
+                <span>{proposal.id}</span>
+                <span>{JSON.stringify(proposal.expires)}</span>
+              </div>
+              <p className="my-8">{proposal.description}</p>
               <div className="p-2 border border-black rounded mb-8">
                 <code className="break-all">
                   {JSON.stringify(proposal.msgs)}

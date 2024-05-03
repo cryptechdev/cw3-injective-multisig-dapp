@@ -5,11 +5,71 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
-import { InstantiateResult } from '@cosmjs/cosmwasm-stargate'
-import { InstantiateMsg, Voter } from 'types/cw3'
+import { InstantiateMsg, Voter, Duration, ThresholdResponse } from 'types/cw3'
+import {
+  TxRaw,
+  MsgSend,
+  BaseAccount,
+  TxRestClient,
+  ChainRestAuthApi,
+  createTransaction,
+  CosmosTxV1Beta1Tx,
+  BroadcastModeKeplr,
+  ChainRestTendermintApi,
+  getTxRawFromTxRawOrDirectSignResponse,
+  Msgs,
+} from '@injectivelabs/sdk-ts'
+import { BigNumberInBase } from '@injectivelabs/utils'
+import { getStdFee, DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
+import { ChainId } from '@injectivelabs/ts-types'
+import { TransactionException } from '@injectivelabs/exceptions'
+import { Msg, SignDoc } from '@keplr-wallet/types'
+
+declare global {
+  interface Window {
+    keplr: any
+  }
+}
 
 const MULTISIG_CODE_ID =
-  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 2081
+  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
+
+const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-1'
+
+const REST_ENDPOINT =
+  process.env.NEXT_PUBLIC_REST_ENDPOINT ||
+  'https://sentry.lcd.injective.network'
+
+const getKeplr = async (chainId: string) => {
+  await window.keplr.enable(chainId)
+
+  const offlineSigner = window.keplr.getOfflineSigner(chainId)
+  const accounts = await offlineSigner.getAccounts()
+  const key = await window.keplr.getKey(chainId)
+  console.log('getKeplr', offlineSigner, accounts, key)
+
+  return { offlineSigner, accounts, key }
+}
+
+const broadcastTx = async (chainId: string, txRaw: TxRaw) => {
+  const keplr = await getKeplr(chainId)
+  const result = await keplr.offlineSigner.sendTx(
+    chainId,
+    CosmosTxV1Beta1Tx.TxRaw.encode(txRaw).finish(),
+    BroadcastModeKeplr.Sync
+  )
+
+  console.log('broadcastTx', result)
+
+  if (!result || result.length === 0) {
+    throw new TransactionException(
+      new Error('Transaction failed to be broadcasted'),
+      { contextModule: 'Keplr' }
+    )
+  }
+
+  return Buffer.from(result).toString('hex')
+}
 
 function AddressRow({ idx, readOnly }: { idx: number; readOnly: boolean }) {
   return (
@@ -68,13 +128,13 @@ interface MultisigFormElement extends HTMLFormElement {
 
 const CreateMultisig: NextPage = () => {
   const router = useRouter()
-  const { walletAddress, signingClient } = useSigningClient()
   const [count, setCount] = useState(2)
   const [contractAddress, setContractAddress] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { walletAddress, connectWallet, disconnect } = useSigningClient()
 
-  const handleSubmit = (event: FormEvent<MultisigFormElement>) => {
+  const handleSubmit = async (event: FormEvent<MultisigFormElement>) => {
     event.preventDefault()
     setError('')
     setLoading(true)
@@ -90,48 +150,95 @@ const CreateMultisig: NextPage = () => {
       time: parseInt(formEl.duration.value?.trim()),
     }
 
-    const msg = {
-      voters,
-      threshold: { absolute_count: { weight: required_weight } },
-      max_voting_period,
+    /** Account Details **/
+    const keplr = await getKeplr(CHAIN_ID)
+    const chainRestAuthApi = new ChainRestAuthApi(REST_ENDPOINT)
+    const accountDetailsResponse = await chainRestAuthApi.fetchAccount(
+      keplr.accounts[0].address
+    )
+    const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse)
+
+    /** Block Details */
+    const chainRestTendermintApi = new ChainRestTendermintApi(REST_ENDPOINT)
+    const latestBlock = await chainRestTendermintApi.fetchLatestBlock()
+    const latestHeight = latestBlock.header.height
+    const timeoutHeight = new BigNumberInBase(latestHeight).plus(
+      DEFAULT_BLOCK_TIMEOUT_HEIGHT
+    )
+
+    /** Preparing the transaction */
+    const msg: Msg = {
+      type: 'cosmos-sdk/MsgInstantiateContract',
+      value: {
+        code_id: MULTISIG_CODE_ID,
+        init_msg: {
+          voters,
+          threshold: { absolute_count: { weight: required_weight } },
+          max_voting_period,
+        },
+        init_coins: [],
+        migratable: false,
+        label: formEl.label.value.trim(),
+      },
     }
+
+    console.log('msg', msg)
 
     const label = formEl.label.value.trim()
 
-    console.log('message', msg)
-    console.log('label', label)
+    const instantiateMsg: InstantiateMsg = {
+      ...msg,
+      max_voting_period: max_voting_period,
+      threshold: { absolute_count: { weight: required_weight } },
+      voters: voters,
+    }
 
     // @ebaker TODO: add more validation
-    if (!validateNonEmpty(msg, label)) {
+    if (!validateNonEmpty(msg as unknown as InstantiateMsg, label)) {
       setLoading(false)
       setError('All fields are required.')
       return
     }
 
-    if (!signingClient) {
-      setLoading(false)
-      setError('Please try reconnecting your wallet.')
-      return
-    }
+    const key = await window.keplr.getKey(CHAIN_ID)
+    const pubKey = key.publicKey
 
-    console.log('validated')
+    const { txRaw, signDoc } = createTransaction({
+      pubKey: pubKey,
+      chainId: CHAIN_ID,
+      fee: getStdFee({}),
+      message: instantiateMsg,
+      sequence: baseAccount.sequence,
+      timeoutHeight: timeoutHeight.toNumber(),
+      accountNumber: baseAccount.accountNumber,
+    })
 
-    signingClient
-      .instantiate(walletAddress, MULTISIG_CODE_ID, msg, label, 'auto')
-      .then((response: InstantiateResult) => {
-        console.log('response', response)
-        setLoading(false)
-        if (response.contractAddress.length > 0) {
-          setContractAddress(response.contractAddress)
-        }
-      })
-      .catch((error: any) => {
-        setLoading(false)
-        console.error(error)
-        setError(error.message)
-      })
+    console.log('txRaw', txRaw, signDoc)
+
+    // Sign the transaction
+    const { offlineSigner } = await getKeplr(CHAIN_ID)
+    const directSignResponse = await offlineSigner.signDirect(
+      walletAddress,
+      signDoc as unknown as SignDoc
+    )
+    console.log('directSignResponse', directSignResponse)
+
+    // Broadcast the transaction
+    const txHash = await broadcastTx(CHAIN_ID, txRaw)
+    console.log('txHash', txHash)
+    const txRestClient = new TxRestClient(REST_ENDPOINT)
+    const response = await txRestClient.fetchTxPoll(txHash)
+
+    console.log('response', response)
+
+    // Handle response
+    /* if (response.contractAddress.length > 0) {
+      setContractAddress(response.contractAddress);
+    } */
+    setLoading(false)
   }
 
+  console.log('contractAddress', contractAddress)
   const complete = contractAddress.length > 0
 
   return (

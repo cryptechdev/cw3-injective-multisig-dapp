@@ -41,64 +41,67 @@ const Home: NextPage = () => {
         if (response.proposals.length < 10) {
           setHideLoadMore(true)
         }
-        setReversedProposals(reversedProposals.concat(response.proposals))
+        setReversedProposals((prevProposals) =>
+          prevProposals.concat(response.proposals)
+        )
       })
       .then(() => setLoading(false))
       .catch((err) => {
         setLoading(false)
         console.log('err', err)
       })
-  }, [walletAddress, signingClient, multisigAddress, startBefore, reversedProposals])
+  }, [walletAddress, signingClient, multisigAddress, startBefore])
 
   return (
     <WalletLoader loading={reversedProposals.length === 0 && loading}>
-      <div className="flex flex-col w-96 lg:w-6/12 max-w-full px-2 py-4">
-        <div className="flex flex-row justify-between items-center mb-4">
-          <h1 className="text-lg font-bold sm:text-3xl">Proposals</h1>
-          <button
-            className="btn btn-primary btn-sm text-lg"
-            onClick={() =>
-              router.push(`/${encodeURIComponent(multisigAddress)}/create`)
-            }
-          >
-            + Create
-          </button>
+      <div className="w-full">
+        <div className="flex flex-col w-full max-w-[1200px] m-auto px-16">
+          <div className="flex flex-row justify-between items-center my-16 px-8">
+            <h1 className="text-lg font-bold sm:text-3xl">Proposals</h1>
+            <button
+              className="btn btn-primary btn-sm text-lg"
+              onClick={() =>
+                router.push(`/${encodeURIComponent(multisigAddress)}/create`)
+              }
+            >
+              + Create
+            </button>
+          </div>
+        </div>
+        <div className="w-full max-w-[1200px] m-auto px-16">
+          {reversedProposals.length === 0 && (
+            <div className="text-center">
+              No proposals found, please create a proposal.
+            </div>
+          )}
+          {reversedProposals.map((proposal, idx) => {
+            const { title, id, status } = proposal
+            const expires = proposal.expires as Expiration
+
+            return (
+              <ProposalCard
+                key={id}
+                title={title}
+                id={`${id}`}
+                status={status}
+                expires_at={parseInt(expires.at_time)}
+                multisigAddress={multisigAddress}
+              />
+            )
+          })}
+          {!hideLoadMore && (
+            <button
+              className="btn btn-primary btn-outline text-lg w-full mt-2"
+              onClick={() => {
+                const proposal = reversedProposals[reversedProposals.length - 1]
+                setStartBefore(proposal.id)
+              }}
+            >
+              Load More
+            </button>
+          )}
         </div>
       </div>
-      <div className="w-96 lg:w-6/12 max-w-full">
-        {reversedProposals.length === 0 && (
-          <div className="text-center">
-            No proposals found, please create a proposal.
-          </div>
-        )}
-        {reversedProposals.map((proposal, idx) => {
-          const { title, id, status } = proposal
-          const expires = proposal.expires as Expiration
-
-          return (
-            <ProposalCard
-              key={id}
-              title={title}
-              id={`${id}`}
-              status={status}
-              expires_at={parseInt(expires.at_time)}
-              multisigAddress={multisigAddress}
-            />
-          )
-        })}
-        {!hideLoadMore && (
-          <button
-            className="btn btn-primary btn-outline text-lg w-full mt-2"
-            onClick={() => {
-              const proposal = reversedProposals[reversedProposals.length - 1]
-              setStartBefore(proposal.id)
-            }}
-          >
-            Load More
-          </button>
-        )}
-      </div>
-      <div></div>
     </WalletLoader>
   )
 }
