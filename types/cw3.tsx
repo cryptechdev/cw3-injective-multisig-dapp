@@ -244,7 +244,6 @@ export type Duration =
   }
 
 export interface InstantiateMsg {
-  [k: string]: unknown
   max_voting_period: Duration
   threshold: any
   voters: Voter[]

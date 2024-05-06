@@ -5,7 +5,7 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
-import { InstantiateMsg, Voter, Duration, ThresholdResponse } from 'types/cw3'
+import { InstantiateMsg, Voter } from 'types/injective-cw3'
 import {
   TxRaw,
   MsgSend,
@@ -18,6 +18,7 @@ import {
   ChainRestTendermintApi,
   getTxRawFromTxRawOrDirectSignResponse,
   Msgs,
+  MsgArg,
 } from '@injectivelabs/sdk-ts'
 import { BigNumberInBase } from '@injectivelabs/utils'
 import { getStdFee, DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
@@ -154,7 +155,7 @@ const CreateMultisig: NextPage = () => {
     const keplr = await getKeplr(CHAIN_ID)
     const chainRestAuthApi = new ChainRestAuthApi(REST_ENDPOINT)
     const accountDetailsResponse = await chainRestAuthApi.fetchAccount(
-      keplr.accounts[0].address
+      walletAddress
     )
     const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse)
 
@@ -165,36 +166,22 @@ const CreateMultisig: NextPage = () => {
     const timeoutHeight = new BigNumberInBase(latestHeight).plus(
       DEFAULT_BLOCK_TIMEOUT_HEIGHT
     )
-
-    /** Preparing the transaction */
-    const msg: Msg = {
-      type: 'cosmos-sdk/MsgInstantiateContract',
-      value: {
-        code_id: MULTISIG_CODE_ID,
-        init_msg: {
-          voters,
-          threshold: { absolute_count: { weight: required_weight } },
-          max_voting_period,
-        },
-        init_coins: [],
-        migratable: false,
-        label: formEl.label.value.trim(),
-      },
-    }
-
-    console.log('msg', msg)
-
     const label = formEl.label.value.trim()
 
+    /** Preparing the transaction */
     const instantiateMsg: InstantiateMsg = {
-      ...msg,
       max_voting_period: max_voting_period,
       threshold: { absolute_count: { weight: required_weight } },
       voters: voters,
     }
 
+    const msg: MsgArg = {
+      type: label,
+      message: instantiateMsg,
+    }
+
     // @ebaker TODO: add more validation
-    if (!validateNonEmpty(msg as unknown as InstantiateMsg, label)) {
+    if (!validateNonEmpty(instantiateMsg as InstantiateMsg, label)) {
       setLoading(false)
       setError('All fields are required.')
       return
@@ -207,7 +194,7 @@ const CreateMultisig: NextPage = () => {
       pubKey: pubKey,
       chainId: CHAIN_ID,
       fee: getStdFee({}),
-      message: instantiateMsg,
+      message: msg,
       sequence: baseAccount.sequence,
       timeoutHeight: timeoutHeight.toNumber(),
       accountNumber: baseAccount.accountNumber,
