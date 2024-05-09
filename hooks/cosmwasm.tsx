@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { connectKeplr } from 'services/keplr'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
+import { WalletStrategy } from '@injectivelabs/wallet-ts'
 
 export interface ISigningCosmWasmClientContext {
   walletAddress: string
@@ -8,6 +9,7 @@ export interface ISigningCosmWasmClientContext {
   loading: boolean
   error: any
   connectWallet: any
+  wallet: WalletStrategy | null;
   disconnect: Function
 }
 
@@ -16,6 +18,7 @@ const PUBLIC_CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID
 
 export const useSigningCosmWasmClient = (): ISigningCosmWasmClientContext => {
   const [walletAddress, setWalletAddress] = useState('')
+  const [wallet, setWallet] = useState<WalletStrategy | null>(null);
   const [signingClient, setSigningClient] =
     useState<SigningCosmWasmClient | null>(null)
   const [loading, setLoading] = useState(false)
@@ -67,6 +70,7 @@ export const useSigningCosmWasmClient = (): ISigningCosmWasmClientContext => {
     loading,
     error,
     connectWallet,
+    wallet,
     disconnect,
   }
 }

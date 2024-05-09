@@ -5,10 +5,8 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
-import { InstantiateMsg, Voter } from 'types/injective-cw3'
 import {
   TxRaw,
-  MsgSend,
   BaseAccount,
   TxRestClient,
   ChainRestAuthApi,
@@ -16,20 +14,24 @@ import {
   CosmosTxV1Beta1Tx,
   BroadcastModeKeplr,
   ChainRestTendermintApi,
-  getTxRawFromTxRawOrDirectSignResponse,
-  Msgs,
-  MsgArg,
 } from '@injectivelabs/sdk-ts'
 import { BigNumberInBase } from '@injectivelabs/utils'
 import { getStdFee, DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
-import { ChainId } from '@injectivelabs/ts-types'
 import { TransactionException } from '@injectivelabs/exceptions'
-import { Msg, SignDoc } from '@keplr-wallet/types'
+import useExecuteTx from 'hooks/useExecuteTx'
+import { instantiateMultisigTx } from 'util/tx'
+import { InstantiateMsg, Voter } from 'types/injective-cw3'
 
 declare global {
   interface Window {
     keplr: any
   }
+}
+
+interface Msgs {
+  type: string;
+  message: InstantiateMsg;
+  // ... other properties
 }
 
 const MULTISIG_CODE_ID =
@@ -128,6 +130,7 @@ interface MultisigFormElement extends HTMLFormElement {
 }
 
 const CreateMultisig: NextPage = () => {
+  const executeTx = useExecuteTx();
   const router = useRouter()
   const [count, setCount] = useState(2)
   const [contractAddress, setContractAddress] = useState('')
@@ -175,11 +178,6 @@ const CreateMultisig: NextPage = () => {
       voters: voters,
     }
 
-    const msg: MsgArg = {
-      type: label,
-      message: instantiateMsg,
-    }
-
     // @ebaker TODO: add more validation
     if (!validateNonEmpty(instantiateMsg as InstantiateMsg, label)) {
       setLoading(false)
@@ -187,36 +185,45 @@ const CreateMultisig: NextPage = () => {
       return
     }
 
+    try {
+      const response = await instantiateMultisigTx(
+        walletAddress,
+        instantiateMsg,
+        executeTx
+      );
+      console.log('response', response)
+    } catch (e) {
+      console.log("error", e);
+    }
+
     const key = await window.keplr.getKey(CHAIN_ID)
     const pubKey = key.publicKey
 
-    const { txRaw, signDoc } = createTransaction({
+    /** Prepare the Transaction * */
+    /* const { txRaw } = createTransaction({
       pubKey: pubKey,
       chainId: CHAIN_ID,
       fee: getStdFee({}),
-      message: msg,
+      message: instantiateMsg,
       sequence: baseAccount.sequence,
       timeoutHeight: timeoutHeight.toNumber(),
       accountNumber: baseAccount.accountNumber,
-    })
-
-    console.log('txRaw', txRaw, signDoc)
+    }) */
 
     // Sign the transaction
     const { offlineSigner } = await getKeplr(CHAIN_ID)
     const directSignResponse = await offlineSigner.signDirect(
-      walletAddress,
-      signDoc as unknown as SignDoc
+      walletAddress
     )
     console.log('directSignResponse', directSignResponse)
 
     // Broadcast the transaction
-    const txHash = await broadcastTx(CHAIN_ID, txRaw)
+    /* const txHash = await broadcastTx(CHAIN_ID, txRaw)
     console.log('txHash', txHash)
     const txRestClient = new TxRestClient(REST_ENDPOINT)
     const response = await txRestClient.fetchTxPoll(txHash)
 
-    console.log('response', response)
+    console.log('response', response) */
 
     // Handle response
     /* if (response.contractAddress.length > 0) {
