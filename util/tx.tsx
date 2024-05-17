@@ -1,7 +1,6 @@
 import { MsgInstantiateContractEncodeObject } from '@cosmjs/cosmwasm-stargate'
-import { toUtf8 } from 'cosmwasm'
+import { MsgInstantiateContract, toUtf8 } from '@injectivelabs/sdk-ts'
 import { InstantiateMsg } from 'types/injective-cw3'
-import { MsgInstantiateContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 
 export const instantiateMultisigTx = async (
   walletAddress: string,
@@ -10,27 +9,23 @@ export const instantiateMultisigTx = async (
   pubKey: string,
   label: string,
   message: InstantiateMsg,
-  executeTx: (msgs: MsgInstantiateContractEncodeObject[]) => Promise<
+  executeTx: (msgs: MsgInstantiateContract[]) => Promise<
     | {
         transactionHash: string
       }
     | undefined
   >
 ): Promise<{ transactionHash: string } | undefined> => {
-  let msg: MsgInstantiateContractEncodeObject
-  console.log('instantiateMultisigTx', message)
-  msg = {
-    typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-    value: MsgInstantiateContract.fromPartial({
-      sender: walletAddress,
-      admin: walletAddress,
-      label: label,
-      code_id: codeId as never,
-      msg: toUtf8(JSON.stringify(message)),
-      funds: [],
-    }),
-  }
-  console.log('instantiateMultisigTxMsg', msg)
+  let msg: MsgInstantiateContract
+  console.log('instantiateMultisigTx.message', message)
+  msg = MsgInstantiateContract.fromJSON({
+    sender: walletAddress,
+    admin: walletAddress,
+    codeId: codeId,
+    label: label,
+    msg: toUtf8(JSON.stringify(message)),
+  })
+  console.log('instantiateMultisigTx.msg', msg)
 
   return await executeTx([msg])
 }

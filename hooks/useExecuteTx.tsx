@@ -1,9 +1,6 @@
 import { MsgInstantiateContractEncodeObject } from '@cosmjs/cosmwasm-stargate'
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
-import {
-  MsgInstantiateContract,
-  getErrorMessage,
-} from '@injectivelabs/sdk-ts'
+import { MsgInstantiateContract, getErrorMessage } from '@injectivelabs/sdk-ts'
 import {
   MsgBroadcaster,
   Wallet,
@@ -12,6 +9,7 @@ import {
 import { useSigningClient } from 'contexts/cosmwasm'
 import { useCallback, useMemo } from 'react'
 import { ChainId } from '@injectivelabs/ts-types'
+import { Bech32, fromBech32 } from 'cosmwasm'
 
 const MULTISIG_CODE_ID =
   parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
@@ -22,9 +20,7 @@ const REST_ENDPOINT =
   process.env.NEXT_PUBLIC_REST_ENDPOINT ||
   'https://sentry.lcd.injective.network'
 
-const useExecuteTx = (): ((
-  msgs: MsgInstantiateContractEncodeObject[]
-) => Promise<
+const useExecuteTx = (): ((msgs: MsgInstantiateContract[]) => Promise<
   | {
       transactionHash: string
     }
@@ -44,17 +40,13 @@ const useExecuteTx = (): ((
 
   const execute = useCallback(
     async (
-      msgs: MsgInstantiateContractEncodeObject[]
+      msgs: MsgInstantiateContract[]
     ): Promise<{ transactionHash: string } | undefined> => {
       console.log('useExecuteTx.address', walletAddress)
       console.log('useExecuteTx.network', network)
       console.log('useExecuteTx.wallet', walletArgs.wallet)
       if (walletAddress.length === 0) return undefined
       try {
-        if (!walletArgs.wallet) {
-          throw new Error('Wallet not connected')
-        }
-
         const broadcaster = new MsgBroadcaster({
           network,
           walletStrategy: new WalletStrategy(walletArgs),
@@ -66,14 +58,20 @@ const useExecuteTx = (): ((
         console.log('useExecuteTx.broadcaster', broadcaster)
 
         const injMsgs = msgs.map((msg) => {
+          console.log('useExecuteTx.msg', msg)
           return MsgInstantiateContract.fromJSON({
-            sender: msg.value.sender ?? '',
-            admin: msg.value.admin ?? '',
-            label: msg.value.label ?? '',
-            msg: msg.value.msg ?? '',
+            sender: msg.params.sender ?? '',
+            admin: msg.params.admin ?? '',
             codeId: MULTISIG_CODE_ID,
+            label: msg.params.label ?? '',
+            msg:
+              JSON.parse(
+                Buffer.from(msg.params.msg as Uint8Array).toString('utf-8')
+              ) ?? '',
           })
         })
+
+        console.log('useExecuteTx.injMsgs', injMsgs)
 
         const response = await broadcaster.broadcast({
           address: walletAddress,

@@ -219,6 +219,7 @@ const CreateMultisig: NextPage = () => {
     // Sign the transaction
     const { offlineSigner } = await getKeplr(CHAIN_ID)
     console.log('offlineSigner', offlineSigner)
+
     const directSignResponse = await offlineSigner.signDirect(walletAddress)
     console.log('directSignResponse', directSignResponse)
 
