@@ -5,9 +5,7 @@
     {
       "description": "Return ThresholdResponse",
       "type": "object",
-      "required": [
-        "threshold"
-      ],
+      "required": ["threshold"],
       "properties": {
         "threshold": {
           "type": "object"
@@ -18,15 +16,11 @@
     {
       "description": "Returns ProposalResponse",
       "type": "object",
-      "required": [
-        "proposal"
-      ],
+      "required": ["proposal"],
       "properties": {
         "proposal": {
           "type": "object",
-          "required": [
-            "proposal_id"
-          ],
+          "required": ["proposal_id"],
           "properties": {
             "proposal_id": {
               "type": "integer",
@@ -41,26 +35,18 @@
     {
       "description": "Returns ProposalListResponse",
       "type": "object",
-      "required": [
-        "list_proposals"
-      ],
+      "required": ["list_proposals"],
       "properties": {
         "list_proposals": {
           "type": "object",
           "properties": {
             "limit": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint32",
               "minimum": 0.0
             },
             "start_after": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint64",
               "minimum": 0.0
             }
@@ -72,26 +58,18 @@
     {
       "description": "Returns ProposalListResponse",
       "type": "object",
-      "required": [
-        "reverse_proposals"
-      ],
+      "required": ["reverse_proposals"],
       "properties": {
         "reverse_proposals": {
           "type": "object",
           "properties": {
             "limit": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint32",
               "minimum": 0.0
             },
             "start_before": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint64",
               "minimum": 0.0
             }
@@ -103,16 +81,11 @@
     {
       "description": "Returns VoteResponse",
       "type": "object",
-      "required": [
-        "vote"
-      ],
+      "required": ["vote"],
       "properties": {
         "vote": {
           "type": "object",
-          "required": [
-            "proposal_id",
-            "voter"
-          ],
+          "required": ["proposal_id", "voter"],
           "properties": {
             "proposal_id": {
               "type": "integer",
@@ -130,21 +103,14 @@
     {
       "description": "Returns VoteListResponse",
       "type": "object",
-      "required": [
-        "list_votes"
-      ],
+      "required": ["list_votes"],
       "properties": {
         "list_votes": {
           "type": "object",
-          "required": [
-            "proposal_id"
-          ],
+          "required": ["proposal_id"],
           "properties": {
             "limit": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint32",
               "minimum": 0.0
             },
@@ -154,10 +120,7 @@
               "minimum": 0.0
             },
             "start_after": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             }
           }
         }
@@ -167,15 +130,11 @@
     {
       "description": "Returns VoterInfo",
       "type": "object",
-      "required": [
-        "voter"
-      ],
+      "required": ["voter"],
       "properties": {
         "voter": {
           "type": "object",
-          "required": [
-            "address"
-          ],
+          "required": ["address"],
           "properties": {
             "address": {
               "type": "string"
@@ -188,26 +147,18 @@
     {
       "description": "Returns VoterListResponse",
       "type": "object",
-      "required": [
-        "list_voters"
-      ],
+      "required": ["list_voters"],
       "properties": {
         "list_voters": {
           "type": "object",
           "properties": {
             "limit": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint32",
               "minimum": 0.0
             },
             "start_after": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             }
           }
         }

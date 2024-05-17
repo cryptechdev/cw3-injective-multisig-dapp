@@ -5,26 +5,32 @@ import { MsgInstantiateContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 
 export const instantiateMultisigTx = async (
   walletAddress: string,
+  codeId: number,
+  chainId: string,
+  pubKey: string,
+  label: string,
   message: InstantiateMsg,
   executeTx: (msgs: MsgInstantiateContractEncodeObject[]) => Promise<
     | {
-      transactionHash: string
-    }
+        transactionHash: string
+      }
     | undefined
   >
 ): Promise<{ transactionHash: string } | undefined> => {
   let msg: MsgInstantiateContractEncodeObject
+  console.log('instantiateMultisigTx', message)
   msg = {
     typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
     value: MsgInstantiateContract.fromPartial({
-      sender: this.sender,
-      admin: this.admin,
-      label: this.label,
-      code_id: this.code_id,
+      sender: walletAddress,
+      admin: walletAddress,
+      label: label,
+      code_id: codeId as never,
       msg: toUtf8(JSON.stringify(message)),
       funds: [],
     }),
   }
+  console.log('instantiateMultisigTxMsg', msg)
 
   return await executeTx([msg])
 }

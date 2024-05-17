@@ -4,17 +4,11 @@
   "oneOf": [
     {
       "type": "object",
-      "required": [
-        "propose"
-      ],
+      "required": ["propose"],
       "properties": {
         "propose": {
           "type": "object",
-          "required": [
-            "description",
-            "msgs",
-            "title"
-          ],
+          "required": ["description", "msgs", "title"],
           "properties": {
             "description": {
               "type": "string"
@@ -45,16 +39,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "vote"
-      ],
+      "required": ["vote"],
       "properties": {
         "vote": {
           "type": "object",
-          "required": [
-            "proposal_id",
-            "vote"
-          ],
+          "required": ["proposal_id", "vote"],
           "properties": {
             "proposal_id": {
               "type": "integer",
@@ -71,15 +60,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "execute"
-      ],
+      "required": ["execute"],
       "properties": {
         "execute": {
           "type": "object",
-          "required": [
-            "proposal_id"
-          ],
+          "required": ["proposal_id"],
           "properties": {
             "proposal_id": {
               "type": "integer",
@@ -93,15 +78,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "close"
-      ],
+      "required": ["close"],
       "properties": {
         "close": {
           "type": "object",
-          "required": [
-            "proposal_id"
-          ],
+          "required": ["proposal_id"],
           "properties": {
             "proposal_id": {
               "type": "integer",
@@ -121,16 +102,11 @@
         {
           "description": "Sends native tokens from the contract to the given address.\n\nThis is translated to a [MsgSend](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto#L19-L28). `from_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "send"
-          ],
+          "required": ["send"],
           "properties": {
             "send": {
               "type": "object",
-              "required": [
-                "amount",
-                "to_address"
-              ],
+              "required": ["amount", "to_address"],
               "properties": {
                 "amount": {
                   "type": "array",
@@ -149,15 +125,11 @@
         {
           "description": "This will burn the given coins from the contract's account. There is no Cosmos SDK message that performs this, but it can be done by calling the bank keeper. Important if a contract controls significant token supply that must be retired.",
           "type": "object",
-          "required": [
-            "burn"
-          ],
+          "required": ["burn"],
           "properties": {
             "burn": {
               "type": "object",
-              "required": [
-                "amount"
-              ],
+              "required": ["amount"],
               "properties": {
                 "amount": {
                   "type": "array",
@@ -178,10 +150,7 @@
     },
     "Coin": {
       "type": "object",
-      "required": [
-        "amount",
-        "denom"
-      ],
+      "required": ["amount", "denom"],
       "properties": {
         "amount": {
           "$ref": "#/definitions/Uint128"
@@ -195,9 +164,7 @@
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "bank"
-          ],
+          "required": ["bank"],
           "properties": {
             "bank": {
               "$ref": "#/definitions/BankMsg"
@@ -207,9 +174,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "custom"
-          ],
+          "required": ["custom"],
           "properties": {
             "custom": {
               "$ref": "#/definitions/Empty"
@@ -219,9 +184,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "staking"
-          ],
+          "required": ["staking"],
           "properties": {
             "staking": {
               "$ref": "#/definitions/StakingMsg"
@@ -231,9 +194,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "distribution"
-          ],
+          "required": ["distribution"],
           "properties": {
             "distribution": {
               "$ref": "#/definitions/DistributionMsg"
@@ -243,9 +204,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "wasm"
-          ],
+          "required": ["wasm"],
           "properties": {
             "wasm": {
               "$ref": "#/definitions/WasmMsg"
@@ -261,15 +220,11 @@
         {
           "description": "This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "set_withdraw_address"
-          ],
+          "required": ["set_withdraw_address"],
           "properties": {
             "set_withdraw_address": {
               "type": "object",
-              "required": [
-                "address"
-              ],
+              "required": ["address"],
               "properties": {
                 "address": {
                   "description": "The `withdraw_address`",
@@ -283,15 +238,11 @@
         {
           "description": "This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "withdraw_delegator_reward"
-          ],
+          "required": ["withdraw_delegator_reward"],
           "properties": {
             "withdraw_delegator_reward": {
               "type": "object",
-              "required": [
-                "validator"
-              ],
+              "required": ["validator"],
               "properties": {
                 "validator": {
                   "description": "The `validator_address`",
@@ -314,9 +265,7 @@
         {
           "description": "AtHeight will expire when `env.block.height` >= height",
           "type": "object",
-          "required": [
-            "at_height"
-          ],
+          "required": ["at_height"],
           "properties": {
             "at_height": {
               "type": "integer",
@@ -329,9 +278,7 @@
         {
           "description": "AtTime will expire when `env.block.time` >= time",
           "type": "object",
-          "required": [
-            "at_time"
-          ],
+          "required": ["at_time"],
           "properties": {
             "at_time": {
               "$ref": "#/definitions/Timestamp"
@@ -342,9 +289,7 @@
         {
           "description": "Never will never expire. Used to express the empty variant",
           "type": "object",
-          "required": [
-            "never"
-          ],
+          "required": ["never"],
           "properties": {
             "never": {
               "type": "object"
@@ -360,16 +305,11 @@
         {
           "description": "This is translated to a [MsgDelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L81-L90). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "delegate"
-          ],
+          "required": ["delegate"],
           "properties": {
             "delegate": {
               "type": "object",
-              "required": [
-                "amount",
-                "validator"
-              ],
+              "required": ["amount", "validator"],
               "properties": {
                 "amount": {
                   "$ref": "#/definitions/Coin"
@@ -385,16 +325,11 @@
         {
           "description": "This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "undelegate"
-          ],
+          "required": ["undelegate"],
           "properties": {
             "undelegate": {
               "type": "object",
-              "required": [
-                "amount",
-                "validator"
-              ],
+              "required": ["amount", "validator"],
               "properties": {
                 "amount": {
                   "$ref": "#/definitions/Coin"
@@ -410,17 +345,11 @@
         {
           "description": "This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "redelegate"
-          ],
+          "required": ["redelegate"],
           "properties": {
             "redelegate": {
               "type": "object",
-              "required": [
-                "amount",
-                "dst_validator",
-                "src_validator"
-              ],
+              "required": ["amount", "dst_validator", "src_validator"],
               "properties": {
                 "amount": {
                   "$ref": "#/definitions/Coin"
@@ -456,12 +385,7 @@
     },
     "Vote": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "abstain",
-        "veto"
-      ]
+      "enum": ["yes", "no", "abstain", "veto"]
     },
     "WasmMsg": {
       "description": "The message types of the wasm module.\n\nSee https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto",
@@ -469,17 +393,11 @@
         {
           "description": "Dispatches a call to another contract at a known address (with known ABI).\n\nThis is translated to a [MsgExecuteContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L68-L78). `sender` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "execute"
-          ],
+          "required": ["execute"],
           "properties": {
             "execute": {
               "type": "object",
-              "required": [
-                "contract_addr",
-                "funds",
-                "msg"
-              ],
+              "required": ["contract_addr", "funds", "msg"],
               "properties": {
                 "contract_addr": {
                   "type": "string"
@@ -506,24 +424,14 @@
         {
           "description": "Instantiates a new contracts from previously uploaded Wasm code.\n\nThis is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.16.0-alpha1/x/wasm/internal/types/tx.proto#L47-L61). `sender` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "instantiate"
-          ],
+          "required": ["instantiate"],
           "properties": {
             "instantiate": {
               "type": "object",
-              "required": [
-                "code_id",
-                "funds",
-                "label",
-                "msg"
-              ],
+              "required": ["code_id", "funds", "label", "msg"],
               "properties": {
                 "admin": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "code_id": {
                   "type": "integer",
@@ -556,17 +464,11 @@
         {
           "description": "Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.\n\nOnly the contract admin (as defined in wasmd), if any, is able to make this call.\n\nThis is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96). `sender` is automatically filled with the current contract's address.",
           "type": "object",
-          "required": [
-            "migrate"
-          ],
+          "required": ["migrate"],
           "properties": {
             "migrate": {
               "type": "object",
-              "required": [
-                "contract_addr",
-                "msg",
-                "new_code_id"
-              ],
+              "required": ["contract_addr", "msg", "new_code_id"],
               "properties": {
                 "contract_addr": {
                   "type": "string"
@@ -593,16 +495,11 @@
         {
           "description": "Sets a new admin (for migrate) on the given contract. Fails if this contract is not currently admin of the target contract.",
           "type": "object",
-          "required": [
-            "update_admin"
-          ],
+          "required": ["update_admin"],
           "properties": {
             "update_admin": {
               "type": "object",
-              "required": [
-                "admin",
-                "contract_addr"
-              ],
+              "required": ["admin", "contract_addr"],
               "properties": {
                 "admin": {
                   "type": "string"
@@ -618,15 +515,11 @@
         {
           "description": "Clears the admin on the given contract, so no more migration possible. Fails if this contract is not currently admin of the target contract.",
           "type": "object",
-          "required": [
-            "clear_admin"
-          ],
+          "required": ["clear_admin"],
           "properties": {
             "clear_admin": {
               "type": "object",
-              "required": [
-                "contract_addr"
-              ],
+              "required": ["contract_addr"],
               "properties": {
                 "contract_addr": {
                   "type": "string"

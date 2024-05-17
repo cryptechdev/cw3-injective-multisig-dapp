@@ -2,11 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
   "type": "object",
-  "required": [
-    "max_voting_period",
-    "threshold",
-    "voters"
-  ],
+  "required": ["max_voting_period", "threshold", "voters"],
   "properties": {
     "max_voting_period": {
       "$ref": "#/definitions/Duration"
@@ -31,9 +27,7 @@
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "height"
-          ],
+          "required": ["height"],
           "properties": {
             "height": {
               "type": "integer",
@@ -46,9 +40,7 @@
         {
           "description": "Time in seconds",
           "type": "object",
-          "required": [
-            "time"
-          ],
+          "required": ["time"],
           "properties": {
             "time": {
               "type": "integer",
@@ -66,15 +58,11 @@
         {
           "description": "Declares that a fixed weight of Yes votes is needed to pass. See `ThresholdResponse.AbsoluteCount` in the cw3 spec for details.",
           "type": "object",
-          "required": [
-            "absolute_count"
-          ],
+          "required": ["absolute_count"],
           "properties": {
             "absolute_count": {
               "type": "object",
-              "required": [
-                "weight"
-              ],
+              "required": ["weight"],
               "properties": {
                 "weight": {
                   "type": "integer",
@@ -89,15 +77,11 @@
         {
           "description": "Declares a percentage of the total weight that must cast Yes votes in order for a proposal to pass. See `ThresholdResponse.AbsolutePercentage` in the cw3 spec for details.",
           "type": "object",
-          "required": [
-            "absolute_percentage"
-          ],
+          "required": ["absolute_percentage"],
           "properties": {
             "absolute_percentage": {
               "type": "object",
-              "required": [
-                "percentage"
-              ],
+              "required": ["percentage"],
               "properties": {
                 "percentage": {
                   "$ref": "#/definitions/Decimal"
@@ -110,16 +94,11 @@
         {
           "description": "Declares a `quorum` of the total votes that must participate in the election in order for the vote to be considered at all. See `ThresholdResponse.ThresholdQuorum` in the cw3 spec for details.",
           "type": "object",
-          "required": [
-            "threshold_quorum"
-          ],
+          "required": ["threshold_quorum"],
           "properties": {
             "threshold_quorum": {
               "type": "object",
-              "required": [
-                "quorum",
-                "threshold"
-              ],
+              "required": ["quorum", "threshold"],
               "properties": {
                 "quorum": {
                   "$ref": "#/definitions/Decimal"
@@ -136,10 +115,7 @@
     },
     "Voter": {
       "type": "object",
-      "required": [
-        "addr",
-        "weight"
-      ],
+      "required": ["addr", "weight"],
       "properties": {
         "addr": {
           "type": "string"

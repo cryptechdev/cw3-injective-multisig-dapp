@@ -1,9 +1,17 @@
-import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
-import { MsgExecuteContractCompat, getErrorMessage } from "@injectivelabs/sdk-ts";
-import { MsgBroadcaster } from "@injectivelabs/wallet-ts";
-import { useSigningClient } from "contexts/cosmwasm";
-import { MsgExecuteContractEncodeObject } from "cosmwasm";
-import { useCallback } from "react";
+import { MsgInstantiateContractEncodeObject } from '@cosmjs/cosmwasm-stargate'
+import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
+import {
+  MsgInstantiateContract,
+  getErrorMessage,
+} from '@injectivelabs/sdk-ts'
+import {
+  MsgBroadcaster,
+  Wallet,
+  WalletStrategy,
+} from '@injectivelabs/wallet-ts'
+import { useSigningClient } from 'contexts/cosmwasm'
+import { useCallback, useMemo } from 'react'
+import { ChainId } from '@injectivelabs/ts-types'
 
 const MULTISIG_CODE_ID =
   parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
@@ -14,90 +22,104 @@ const REST_ENDPOINT =
   process.env.NEXT_PUBLIC_REST_ENDPOINT ||
   'https://sentry.lcd.injective.network'
 
-const useExecuteTx = (): ((msgs: MsgExecuteContractEncodeObject[]) => Promise<
+const useExecuteTx = (): ((
+  msgs: MsgInstantiateContractEncodeObject[]
+) => Promise<
   | {
-      transactionHash: string;
+      transactionHash: string
     }
   | undefined
 >) => {
-  const { walletAddress, wallet } = useSigningClient()
+  const { walletAddress } = useSigningClient()
   const network =
-    CHAIN_ID === "injective-888"
-      ? Network.Testnet
-      : Network.Mainnet;
-  const defaultEndpoints = getNetworkEndpoints(network);
-  
+    CHAIN_ID === 'injective-888' ? Network.Testnet : Network.Mainnet
+  const defaultEndpoints = getNetworkEndpoints(network)
+
+  const walletArgs = useMemo(() => {
+    return {
+      chainId: CHAIN_ID === 'injective-888' ? ChainId.Testnet : ChainId.Mainnet,
+      wallet: Wallet.Keplr,
+    }
+  }, [])
+
   const execute = useCallback(
     async (
-      msgs: MsgExecuteContractEncodeObject[]
+      msgs: MsgInstantiateContractEncodeObject[]
     ): Promise<{ transactionHash: string } | undefined> => {
-      if (walletAddress.length === 0) return undefined;
+      console.log('useExecuteTx.address', walletAddress)
+      console.log('useExecuteTx.network', network)
+      console.log('useExecuteTx.wallet', walletArgs.wallet)
+      if (walletAddress.length === 0) return undefined
       try {
-        if (!wallet) {
-          throw new Error("Wallet not connected");
+        if (!walletArgs.wallet) {
+          throw new Error('Wallet not connected')
         }
 
         const broadcaster = new MsgBroadcaster({
           network,
-          walletStrategy: wallet,
+          walletStrategy: new WalletStrategy(walletArgs),
           endpoints: defaultEndpoints,
-        });
+        })
+
+        console.log('useExecuteTx.msgs', msgs)
+
+        console.log('useExecuteTx.broadcaster', broadcaster)
 
         const injMsgs = msgs.map((msg) => {
-          return MsgExecuteContractCompat.fromJSON({
-            contractAddress: msg.value.contract!,
-            sender: msg.value.sender!,
-            msg: JSON.parse(Buffer.from(msg.value.msg!).toString("utf-8")),
-            funds:
-              msg.value.funds && msg.value.funds.length > 0
-                ? msg.value.funds
-                : undefined,
-          });
-        });
+          return MsgInstantiateContract.fromJSON({
+            sender: msg.value.sender ?? '',
+            admin: msg.value.admin ?? '',
+            label: msg.value.label ?? '',
+            msg: msg.value.msg ?? '',
+            codeId: MULTISIG_CODE_ID,
+          })
+        })
 
         const response = await broadcaster.broadcast({
           address: walletAddress,
           msgs: injMsgs,
-        });
+        })
+
+        console.log('useExecuteTx.response', response)
 
         return {
           ...response,
           transactionHash: response.txHash,
-        };
+        }
       } catch (e) {
-        console.error(e);
-        errorMessageFormatter(e);
+        console.error(e)
+        errorMessageFormatter(e)
       }
-      return undefined;
+      return undefined
     },
-    [defaultEndpoints, network, wallet, walletAddress]
-  );
+    [defaultEndpoints, network, walletArgs, walletAddress]
+  )
 
-  return execute;
-};
+  return execute
+}
 
 const errorMessageFormatter = (e: any) => {
-  const msg = getErrorMessage(e, REST_ENDPOINT);
+  const msg = getErrorMessage(e, REST_ENDPOINT)
   // if error is insufficient funds, show error message
-  if (msg.includes("insufficient funds")) {
+  if (msg.includes('insufficient funds')) {
     throw new Error(
       `Insufficient funds, check that you have enough to pay for gas fees`
-    );
-  } else if (msg.includes("one tx is allowed per block")) {
+    )
+  } else if (msg.includes('one tx is allowed per block')) {
     throw new Error(
       `Only one transaction is allowed per block, please try again in a few seconds`
-    );
-  } else if (msg.includes("Neptune")) {
-    const parts1 = msg.split("Error - ");
-    if (parts1.length < 2) throw new Error(msg);
-    const parts2 = parts1[1].split(": ");
-    if (parts2.length < 2) throw new Error(msg);
-    throw new Error(parts2[0]);
+    )
+  } else if (msg.includes('Neptune')) {
+    const parts1 = msg.split('Error - ')
+    if (parts1.length < 2) throw new Error(msg)
+    const parts2 = parts1[1].split(': ')
+    if (parts2.length < 2) throw new Error(msg)
+    throw new Error(parts2[0])
   } else if (msg.includes(`Provided chainId "5"`)) {
-    throw new Error(`Change your MetaMask network to Goerli`);
+    throw new Error(`Change your MetaMask network to Goerli`)
   } else {
-    throw e;
+    throw e
   }
-};
+}
 
-export default useExecuteTx;
+export default useExecuteTx

@@ -29,13 +29,13 @@ declare global {
 }
 
 interface Msgs {
-  type: string;
-  message: InstantiateMsg;
+  type: string
+  message: InstantiateMsg
   // ... other properties
 }
 
 const MULTISIG_CODE_ID =
-  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
+  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 4
 
 const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-1'
 
@@ -130,7 +130,7 @@ interface MultisigFormElement extends HTMLFormElement {
 }
 
 const CreateMultisig: NextPage = () => {
-  const executeTx = useExecuteTx();
+  const executeTx = useExecuteTx()
   const router = useRouter()
   const [count, setCount] = useState(2)
   const [contractAddress, setContractAddress] = useState('')
@@ -185,19 +185,25 @@ const CreateMultisig: NextPage = () => {
       return
     }
 
+    const key = await window.keplr.getKey(CHAIN_ID)
+    const pubKey = key.publicKey
+
+    console.log('pubKey', pubKey)
+
     try {
       const response = await instantiateMultisigTx(
         walletAddress,
+        MULTISIG_CODE_ID,
+        CHAIN_ID,
+        pubKey,
+        label,
         instantiateMsg,
         executeTx
-      );
+      )
       console.log('response', response)
     } catch (e) {
-      console.log("error", e);
+      console.log('error', e)
     }
-
-    const key = await window.keplr.getKey(CHAIN_ID)
-    const pubKey = key.publicKey
 
     /** Prepare the Transaction * */
     /* const { txRaw } = createTransaction({
@@ -212,18 +218,17 @@ const CreateMultisig: NextPage = () => {
 
     // Sign the transaction
     const { offlineSigner } = await getKeplr(CHAIN_ID)
-    const directSignResponse = await offlineSigner.signDirect(
-      walletAddress
-    )
+    console.log('offlineSigner', offlineSigner)
+    const directSignResponse = await offlineSigner.signDirect(walletAddress)
     console.log('directSignResponse', directSignResponse)
 
     // Broadcast the transaction
-    /* const txHash = await broadcastTx(CHAIN_ID, txRaw)
+    const txHash = await broadcastTx(CHAIN_ID, directSignResponse)
     console.log('txHash', txHash)
     const txRestClient = new TxRestClient(REST_ENDPOINT)
     const response = await txRestClient.fetchTxPoll(txHash)
 
-    console.log('response', response) */
+    console.log('response', response)
 
     // Handle response
     /* if (response.contractAddress.length > 0) {

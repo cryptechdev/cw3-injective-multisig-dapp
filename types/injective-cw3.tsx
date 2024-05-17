@@ -1,22 +1,20 @@
 /**
  * Duration is a delta of time. You can add it to a BlockInfo or Expiration to move that further in the future. Note that an height-based Duration and a time-based Expiration cannot be combined
  */
-export type Duration =
-    {
-      time: number
-    }
+export type Duration = {
+  time: number
+}
 /**
  * This defines the different ways tallies can happen.
  *
  * The total_weight used for calculating success as well as the weights of each individual voter used in tallying should be snapshotted at the beginning of the block at which the proposal starts (this is likely the responsibility of a correct cw4 implementation). See also `ThresholdResponse` in the cw3 spec.
  */
-export type Threshold =
-  {
-    absolute_count: {
-      weight: number
-      [k: string]: unknown
-    }
+export type Threshold = {
+  absolute_count: {
+    weight: number
+    [k: string]: unknown
   }
+}
 /**
  * A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
  *
@@ -35,7 +33,6 @@ export interface Voter {
   weight: number
   [k: string]: unknown
 }
-
 
 export type QueryMsg =
   | {
@@ -92,8 +89,7 @@ export type QueryMsg =
       }
     }
 
-
-    export type ExecuteMsg =
+export type ExecuteMsg =
   | {
       propose: {
         description: string
@@ -328,7 +324,7 @@ export type WasmMsg =
  * This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
  */
 export type Binary = string
-export type Vote = "yes" | "no" | "abstain" | "veto"
+export type Vote = 'yes' | 'no' | 'abstain' | 'veto'
 
 export interface Coin {
   amount: Uint128
