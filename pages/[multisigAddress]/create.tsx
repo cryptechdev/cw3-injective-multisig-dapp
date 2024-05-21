@@ -133,7 +133,7 @@ const ProposalCreate: NextPage = () => {
               cols={7}
               name="json"
               readOnly={complete}
-              placeholder='[{"bank":{"send":{"to_address":"stars153w5xhuqu3et29lgqk4dsynj6gjn96lr33wx4e","amount":[{"denom":"ustars","amount":"1000000"}]}}}]'
+              placeholder='[{"bank":{"send":{"to_address":"inj153w5xhuqu3et29lgqk4dsynj6gjn96lr33wx4e","amount":[{"denom":"uinj","amount":"1000000000000"}]}}}]'
             />
             {!complete && (
               <button

@@ -1,4 +1,3 @@
-import { MsgInstantiateContractEncodeObject } from '@cosmjs/cosmwasm-stargate'
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
 import { MsgInstantiateContract, getErrorMessage } from '@injectivelabs/sdk-ts'
 import {
@@ -9,7 +8,6 @@ import {
 import { useSigningClient } from 'contexts/cosmwasm'
 import { useCallback, useMemo } from 'react'
 import { ChainId } from '@injectivelabs/ts-types'
-import { Bech32, fromBech32 } from 'cosmwasm'
 
 const MULTISIG_CODE_ID =
   parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
@@ -20,7 +18,9 @@ const REST_ENDPOINT =
   process.env.NEXT_PUBLIC_REST_ENDPOINT ||
   'https://sentry.lcd.injective.network'
 
-const useExecuteTx = (): ((msgs: MsgInstantiateContract[]) => Promise<
+const useExecuteInstantiateTx = (): ((
+  msgs: MsgInstantiateContract[]
+) => Promise<
   | {
       transactionHash: string
     }
@@ -107,12 +107,6 @@ const errorMessageFormatter = (e: any) => {
     throw new Error(
       `Only one transaction is allowed per block, please try again in a few seconds`
     )
-  } else if (msg.includes('Neptune')) {
-    const parts1 = msg.split('Error - ')
-    if (parts1.length < 2) throw new Error(msg)
-    const parts2 = parts1[1].split(': ')
-    if (parts2.length < 2) throw new Error(msg)
-    throw new Error(parts2[0])
   } else if (msg.includes(`Provided chainId "5"`)) {
     throw new Error(`Change your MetaMask network to Goerli`)
   } else {
@@ -120,4 +114,4 @@ const errorMessageFormatter = (e: any) => {
   }
 }
 
-export default useExecuteTx
+export default useExecuteInstantiateTx

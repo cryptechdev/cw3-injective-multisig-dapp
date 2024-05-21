@@ -16,11 +16,11 @@ import {
   ChainRestTendermintApi,
 } from '@injectivelabs/sdk-ts'
 import { BigNumberInBase } from '@injectivelabs/utils'
-import { getStdFee, DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
+import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
 import { TransactionException } from '@injectivelabs/exceptions'
-import useExecuteTx from 'hooks/useExecuteTx'
 import { instantiateMultisigTx } from 'util/tx'
 import { InstantiateMsg, Voter } from 'types/injective-cw3'
+import useExecuteInstantiateTx from 'hooks/useExecuteTx'
 
 declare global {
   interface Window {
@@ -130,7 +130,7 @@ interface MultisigFormElement extends HTMLFormElement {
 }
 
 const CreateMultisig: NextPage = () => {
-  const executeTx = useExecuteTx()
+  const executeInstantiateTx = useExecuteInstantiateTx()
   const router = useRouter()
   const [count, setCount] = useState(2)
   const [contractAddress, setContractAddress] = useState('')
@@ -190,55 +190,48 @@ const CreateMultisig: NextPage = () => {
 
     console.log('pubKey', pubKey)
 
+    let response
     try {
-      const response = await instantiateMultisigTx(
+      response = await instantiateMultisigTx(
         walletAddress,
         MULTISIG_CODE_ID,
         CHAIN_ID,
         pubKey,
         label,
         instantiateMsg,
-        executeTx
+        executeInstantiateTx
       )
-      console.log('response', response)
     } catch (e) {
       console.log('error', e)
     }
 
-    /** Prepare the Transaction * */
-    /* const { txRaw } = createTransaction({
-      pubKey: pubKey,
-      chainId: CHAIN_ID,
-      fee: getStdFee({}),
-      message: instantiateMsg,
-      sequence: baseAccount.sequence,
-      timeoutHeight: timeoutHeight.toNumber(),
-      accountNumber: baseAccount.accountNumber,
-    }) */
+    const extractContractAddress = (response: any): string | null => {
+      try {
+        const logs = response.logs
+        for (const log of logs) {
+          for (const event of log.events) {
+            for (const attribute of event.attributes) {
+              if (attribute.key === 'contract_address') {
+                return attribute.value.replace(/\"/g, '') // Remove extra quotes
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error extracting contract address:', error)
+      }
+      return null
+    }
 
-    // Sign the transaction
-    const { offlineSigner } = await getKeplr(CHAIN_ID)
-    console.log('offlineSigner', offlineSigner)
+    console.log(
+      'create.extractContractAddress',
+      extractContractAddress(response)
+    )
+    setContractAddress(extractContractAddress(response) || '')
 
-    const directSignResponse = await offlineSigner.signDirect(walletAddress)
-    console.log('directSignResponse', directSignResponse)
-
-    // Broadcast the transaction
-    const txHash = await broadcastTx(CHAIN_ID, directSignResponse)
-    console.log('txHash', txHash)
-    const txRestClient = new TxRestClient(REST_ENDPOINT)
-    const response = await txRestClient.fetchTxPoll(txHash)
-
-    console.log('response', response)
-
-    // Handle response
-    /* if (response.contractAddress.length > 0) {
-      setContractAddress(response.contractAddress);
-    } */
     setLoading(false)
   }
 
-  console.log('contractAddress', contractAddress)
   const complete = contractAddress.length > 0
 
   return (
@@ -352,8 +345,9 @@ const CreateMultisig: NextPage = () => {
         {error && <LineAlert variant="error" msg={error} />}
 
         {contractAddress !== '' && (
-          <div className="text-right">
+          <div className="flex flex-col w-full text-right">
             <LineAlert variant="success" msg={`Success!`} />
+            <span className="py-4">{contractAddress}</span>
             <button
               className="mt-4 box-border px-4 py-2 btn btn-primary"
               onClick={(e) => {

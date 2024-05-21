@@ -1,4 +1,3 @@
-import { MsgInstantiateContractEncodeObject } from '@cosmjs/cosmwasm-stargate'
 import { MsgInstantiateContract, toUtf8 } from '@injectivelabs/sdk-ts'
 import { InstantiateMsg } from 'types/injective-cw3'
 

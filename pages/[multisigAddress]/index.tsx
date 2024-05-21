@@ -74,7 +74,7 @@ const Home: NextPage = () => {
               No proposals found, please create a proposal.
             </div>
           )}
-          {reversedProposals.map((proposal, idx) => {
+          {reversedProposals.map((proposal) => {
             const { title, id, status } = proposal
             const expires = proposal.expires as Expiration
 
