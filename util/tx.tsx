@@ -1,5 +1,9 @@
-import { MsgInstantiateContract, toUtf8 } from '@injectivelabs/sdk-ts'
-import { InstantiateMsg } from 'types/injective-cw3'
+import {
+  MsgExecuteContract,
+  MsgInstantiateContract,
+  toUtf8,
+} from '@injectivelabs/sdk-ts'
+import { ExecuteMsg, InstantiateMsg } from 'types/injective-cw3'
 
 export const instantiateMultisigTx = async (
   walletAddress: string,
@@ -25,6 +29,29 @@ export const instantiateMultisigTx = async (
     msg: toUtf8(JSON.stringify(message)),
   })
   console.log('instantiateMultisigTx.msg', msg)
+
+  return await executeTx([msg])
+}
+
+export const createProposalTx = async (
+  walletAddress: string,
+  contract: string,
+  message: ExecuteMsg,
+  executeTx: (msgs: MsgExecuteContract[]) => Promise<
+    | {
+        transactionHash: string
+      }
+    | undefined
+  >
+): Promise<{ transactionHash: string } | undefined> => {
+  let msg: MsgExecuteContract
+  console.log('createProposalTx.message', message)
+  msg = new MsgExecuteContract({
+    sender: walletAddress,
+    contractAddress: contract,
+    msg: message,
+  })
+  console.log('createProposalTx.msg', msg)
 
   return await executeTx([msg])
 }

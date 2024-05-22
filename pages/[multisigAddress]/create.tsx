@@ -4,13 +4,9 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
-import cloneDeep from 'lodash.clonedeep'
-import { StdFee } from '@cosmjs/stargate'
-
-const defaultFee: StdFee = {
-  amount: [{ amount: '10000', denom: 'ustars' }],
-  gas: '500000',
-}
+import { ExecuteMsg } from 'types/injective-cw3'
+import { createProposalTx } from 'util/tx'
+import { useExecuteProposalTx } from 'hooks/useExecuteTx'
 
 interface FormElements extends HTMLFormControlsCollection {
   label: HTMLInputElement
@@ -22,17 +18,8 @@ interface ProposalFormElement extends HTMLFormElement {
   readonly elements: FormElements
 }
 
-function validateJsonSendMsg(json: any, multisigAddress: string) {
-  if (typeof json !== 'object') {
-    return false
-  }
-  if (!Array.isArray(json)) {
-    return false
-  }
-  return true
-}
-
 const ProposalCreate: NextPage = () => {
+  const executeProposalTx = useExecuteProposalTx()
   const router = useRouter()
   const multisigAddress = (router.query.multisigAddress || '') as string
   const { walletAddress, signingClient } = useSigningClient()
@@ -41,7 +28,7 @@ const ProposalCreate: NextPage = () => {
   const [loading, setLoading] = useState(false)
   const [proposalID, setProposalID] = useState('')
 
-  const handleSubmit = (event: FormEvent<ProposalFormElement>) => {
+  const handleSubmit = async (event: FormEvent<ProposalFormElement>) => {
     event.preventDefault()
     setLoading(true)
     setError('')
@@ -61,47 +48,30 @@ const ProposalCreate: NextPage = () => {
       setError('All fields are required.')
     }
 
-    // clone json string to avoid prototype poisoning
-    // https://medium.com/intrinsic-blog/javascript-prototype-poisoning-vulnerabilities-in-the-wild-7bc15347c96
-    const jsonClone = cloneDeep(jsonStr)
-    let json: any
+    /** Preparing the transaction */
+    const proposeMsg: ExecuteMsg = {
+      propose: {
+        description: String(description),
+        msgs: JSON.parse(jsonStr),
+        title: String(title),
+      },
+    }
+
+    let response
     try {
-      json = JSON.parse(jsonClone)
+      response = await createProposalTx(
+        walletAddress,
+        multisigAddress,
+        proposeMsg,
+        executeProposalTx
+      )
     } catch (e) {
-      setLoading(false)
-      setError('Error in JSON message.')
-      return
+      console.log('error', e)
     }
 
-    if (!validateJsonSendMsg(json, multisigAddress)) {
-      setLoading(false)
-      setError('Error in JSON message.')
-      return
-    }
-    const msgs = json
+    console.log('ProposalCreate.response', response)
 
-    const msg = {
-      title,
-      description,
-      msgs,
-    }
-
-    signingClient
-      ?.execute(walletAddress, multisigAddress, { propose: msg }, defaultFee)
-      .then((response) => {
-        setLoading(false)
-        setTransactionHash(response.transactionHash)
-        const [{ events }] = response.logs
-        const [wasm] = events.filter((e) => e.type === 'wasm')
-        const [{ value }] = wasm.attributes.filter(
-          (w) => w.key === 'proposal_id'
-        )
-        setProposalID(value)
-      })
-      .catch((e) => {
-        setLoading(false)
-        setError(e.message)
-      })
+    setLoading(false)
   }
 
   const complete = transactionHash.length > 0
@@ -133,7 +103,7 @@ const ProposalCreate: NextPage = () => {
               cols={7}
               name="json"
               readOnly={complete}
-              placeholder='[{"bank":{"send":{"to_address":"inj153w5xhuqu3et29lgqk4dsynj6gjn96lr33wx4e","amount":[{"denom":"uinj","amount":"1000000000000"}]}}}]'
+              placeholder='[{"bank":{"send":{"amount":[{"amount":"1000000000000000","denom":"inj"}],"to_address":"inj1u6szhpax4jfpastv7rw4ddu7yn95s96f5pes0p"}}}]'
             />
             {!complete && (
               <button

@@ -1,5 +1,9 @@
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
-import { MsgInstantiateContract, getErrorMessage } from '@injectivelabs/sdk-ts'
+import {
+  MsgExecuteContract,
+  MsgInstantiateContract,
+  getErrorMessage,
+} from '@injectivelabs/sdk-ts'
 import {
   MsgBroadcaster,
   Wallet,
@@ -42,9 +46,9 @@ const useExecuteInstantiateTx = (): ((
     async (
       msgs: MsgInstantiateContract[]
     ): Promise<{ transactionHash: string } | undefined> => {
-      console.log('useExecuteTx.address', walletAddress)
-      console.log('useExecuteTx.network', network)
-      console.log('useExecuteTx.wallet', walletArgs.wallet)
+      console.log('useExecuteInstantiateTx.address', walletAddress)
+      console.log('useExecuteInstantiateTx.network', network)
+      console.log('useExecuteInstantiateTx.wallet', walletArgs.wallet)
       if (walletAddress.length === 0) return undefined
       try {
         const broadcaster = new MsgBroadcaster({
@@ -53,9 +57,9 @@ const useExecuteInstantiateTx = (): ((
           endpoints: defaultEndpoints,
         })
 
-        console.log('useExecuteTx.msgs', msgs)
+        console.log('useExecuteInstantiateTx.msgs', msgs)
 
-        console.log('useExecuteTx.broadcaster', broadcaster)
+        console.log('useExecuteInstantiateTx.broadcaster', broadcaster)
 
         const injMsgs = msgs.map((msg) => {
           console.log('useExecuteTx.msg', msg)
@@ -71,14 +75,90 @@ const useExecuteInstantiateTx = (): ((
           })
         })
 
-        console.log('useExecuteTx.injMsgs', injMsgs)
+        console.log('useExecuteInstantiateTx.injMsgs', injMsgs)
 
         const response = await broadcaster.broadcast({
           address: walletAddress,
           msgs: injMsgs,
         })
 
-        console.log('useExecuteTx.response', response)
+        console.log('useExecuteInstantiateTx.response', response)
+
+        return {
+          ...response,
+          transactionHash: response.txHash,
+        }
+      } catch (e) {
+        console.error(e)
+        errorMessageFormatter(e)
+      }
+      return undefined
+    },
+    [defaultEndpoints, network, walletArgs, walletAddress]
+  )
+
+  return execute
+}
+
+export const useExecuteProposalTx = (): ((
+  msgs: MsgExecuteContract[]
+) => Promise<
+  | {
+      transactionHash: string
+    }
+  | undefined
+>) => {
+  const { walletAddress } = useSigningClient()
+  const network =
+    CHAIN_ID === 'injective-888' ? Network.Testnet : Network.Mainnet
+  const defaultEndpoints = getNetworkEndpoints(network)
+
+  const walletArgs = useMemo(() => {
+    return {
+      chainId: CHAIN_ID === 'injective-888' ? ChainId.Testnet : ChainId.Mainnet,
+      wallet: Wallet.Keplr,
+    }
+  }, [])
+
+  const execute = useCallback(
+    async (
+      msgs: MsgExecuteContract[]
+    ): Promise<{ transactionHash: string } | undefined> => {
+      console.log('useExecuteProposalTx.address', walletAddress)
+      console.log('useExecuteProposalTx.network', network)
+      console.log('useExecuteProposalTx.wallet', walletArgs.wallet)
+      if (walletAddress.length === 0) return undefined
+      try {
+        const broadcaster = new MsgBroadcaster({
+          network,
+          walletStrategy: new WalletStrategy(walletArgs),
+          endpoints: defaultEndpoints,
+        })
+
+        console.log('useExecuteProposalTx.msgs', msgs)
+
+        console.log('useExecuteProposalTx.broadcaster', broadcaster)
+
+        const injMsgs = msgs.map((msg) => {
+          console.log('useExecuteProposalTx.msg', msg)
+          const msgString = JSON.stringify(msg.params.msg)
+          console.log('useExecuteProposalTx.msgString', msgString)
+          return MsgExecuteContract.fromJSON({
+            sender: msg.params.sender ?? '',
+            contractAddress: msg.params.contractAddress ?? '',
+            msg: msg.params.msg,
+            funds: msg.params.funds ?? [],
+          })
+        })
+
+        console.log('useExecuteProposalTx.injMsgs', injMsgs)
+
+        const response = await broadcaster.broadcast({
+          address: walletAddress,
+          msgs: injMsgs,
+        })
+
+        console.log('useExecuteProposalTx.response', response)
 
         return {
           ...response,
