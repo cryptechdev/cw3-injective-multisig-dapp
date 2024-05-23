@@ -5,16 +5,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import ProposalCard from 'components/ProposalCard'
 import { ProposalListResponse, ProposalResponse, Timestamp } from 'types/cw3'
-import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
-
-const MULTISIG_CODE_ID =
-  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
-
-const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-1'
-
-const REST_ENDPOINT =
-  process.env.NEXT_PUBLIC_REST_ENDPOINT ||
-  'https://sentry.lcd.injective.network'
 
 // TODO: review union Expiration from types/cw3
 type Expiration = {
@@ -46,6 +36,30 @@ const Home: NextPage = () => {
       setLabel(response.label)
       setAddress(response.address)
     })
+
+    const storedAddresses =
+      JSON.parse(localStorage.getItem('multisigAddresses')!) || []
+
+    const existingAddress = storedAddresses.find(
+      (item: { address: string }) => item.address === multisigAddress
+    )
+
+    if (!existingAddress) {
+      signingClient.getContract(multisigAddress).then((response) => {
+        const newEntry = { address: response.address, label: response.label }
+        storedAddresses.push(newEntry)
+        localStorage.setItem(
+          'multisigAddresses',
+          JSON.stringify(storedAddresses)
+        )
+
+        setLabel(response.label)
+        setAddress(response.address)
+      })
+    } else {
+      setLabel(existingAddress.label)
+      setAddress(existingAddress.address)
+    }
   }, [multisigAddress, signingClient])
 
   useEffect(() => {
@@ -109,7 +123,9 @@ const Home: NextPage = () => {
           <div className="flex flex-col items-center my-16 px-8 gap-4">
             <h1 className="text-xl font-bold sm:text-5xl">{label}</h1>
             <h1 className="text-md sm:text-2xl">{address}</h1>
-            <h1 className="text-lg font-bold sm:text-3xl">{balance} INJ</h1>
+            <h1 className="text-lg font-bold sm:text-3xl">
+              {Number(balance) / 10e17} INJ
+            </h1>
           </div>
         </div>
         <div className="flex flex-col w-full max-w-[1200px] m-auto px-16">

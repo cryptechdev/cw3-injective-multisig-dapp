@@ -1,11 +1,26 @@
 import type { NextPage } from 'next'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import WalletLoader from 'components/WalletLoader'
+
+type AddressObj = {
+  address: string
+  label: string
+}
 
 const Home: NextPage = () => {
   const router = useRouter()
   const [address, setAddress] = useState('')
+  const [storedAddresses, setStoredAddresses] = useState<AddressObj[]>([])
+
+  useEffect(() => {
+    // Check if window is defined to ensure we are on the client side
+    if (typeof window !== 'undefined') {
+      const addresses =
+        JSON.parse(localStorage.getItem('multisigAddresses')!) || []
+      setStoredAddresses(addresses)
+    }
+  }, [])
 
   return (
     <WalletLoader>
@@ -39,6 +54,17 @@ const Home: NextPage = () => {
                 GO
               </button>
             </div>
+          </div>
+          <div className="flex flex-col gap-4 pt-8">
+            {storedAddresses.map((addressObj: AddressObj) => (
+              <button
+                key={addressObj.address}
+                className="btn btn-primary btn-md font-semibold hover:text-base-100 text-xl rounded-xl w-full"
+                onClick={() => router.push(`/${addressObj.address}`)}
+              >
+                {addressObj.label}
+              </button>
+            ))}
           </div>
         </div>
         <div className="divider p-8 pt-16 before:bg-secondary after:bg-secondary before:h-[1px] after:h-[1px]"></div>
