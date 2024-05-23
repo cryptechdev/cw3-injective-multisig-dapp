@@ -5,8 +5,8 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { ExecuteMsg } from 'types/injective-cw3'
-import { createProposalTx } from 'util/tx'
-import { useExecuteProposalTx } from 'hooks/useExecuteTx'
+import { useExecuteTx } from 'hooks/useExecuteTx'
+import { executeTx } from 'util/tx'
 
 interface FormElements extends HTMLFormControlsCollection {
   label: HTMLInputElement
@@ -19,7 +19,7 @@ interface ProposalFormElement extends HTMLFormElement {
 }
 
 const ProposalCreate: NextPage = () => {
-  const executeProposalTx = useExecuteProposalTx()
+  const executeTxHook = useExecuteTx()
   const router = useRouter()
   const multisigAddress = (router.query.multisigAddress || '') as string
   const { walletAddress, signingClient } = useSigningClient()
@@ -48,7 +48,6 @@ const ProposalCreate: NextPage = () => {
       setError('All fields are required.')
     }
 
-    /** Preparing the transaction */
     const proposeMsg: ExecuteMsg = {
       propose: {
         description: String(description),
@@ -59,17 +58,36 @@ const ProposalCreate: NextPage = () => {
 
     let response
     try {
-      response = await createProposalTx(
+      response = await executeTx(
         walletAddress,
         multisigAddress,
         proposeMsg,
-        executeProposalTx
+        executeTxHook
       )
     } catch (e) {
       console.log('error', e)
     }
 
+    const getProposalId = (response: any): string | null => {
+      const logs = response.logs
+      for (const log of logs) {
+        for (const event of log.events) {
+          if (event.type === 'wasm') {
+            for (const attribute of event.attributes) {
+              if (attribute.key === 'proposal_id') {
+                return attribute.value
+              }
+            }
+          }
+        }
+      }
+      return null
+    }
+
     console.log('ProposalCreate.response', response)
+
+    setProposalID(getProposalId(response) || '')
+    setTransactionHash(response?.transactionHash || '')
 
     setLoading(false)
   }

@@ -46,9 +46,6 @@ const useExecuteInstantiateTx = (): ((
     async (
       msgs: MsgInstantiateContract[]
     ): Promise<{ transactionHash: string } | undefined> => {
-      console.log('useExecuteInstantiateTx.address', walletAddress)
-      console.log('useExecuteInstantiateTx.network', network)
-      console.log('useExecuteInstantiateTx.wallet', walletArgs.wallet)
       if (walletAddress.length === 0) return undefined
       try {
         const broadcaster = new MsgBroadcaster({
@@ -56,10 +53,6 @@ const useExecuteInstantiateTx = (): ((
           walletStrategy: new WalletStrategy(walletArgs),
           endpoints: defaultEndpoints,
         })
-
-        console.log('useExecuteInstantiateTx.msgs', msgs)
-
-        console.log('useExecuteInstantiateTx.broadcaster', broadcaster)
 
         const injMsgs = msgs.map((msg) => {
           console.log('useExecuteTx.msg', msg)
@@ -75,14 +68,10 @@ const useExecuteInstantiateTx = (): ((
           })
         })
 
-        console.log('useExecuteInstantiateTx.injMsgs', injMsgs)
-
         const response = await broadcaster.broadcast({
           address: walletAddress,
           msgs: injMsgs,
         })
-
-        console.log('useExecuteInstantiateTx.response', response)
 
         return {
           ...response,
@@ -100,9 +89,7 @@ const useExecuteInstantiateTx = (): ((
   return execute
 }
 
-export const useExecuteProposalTx = (): ((
-  msgs: MsgExecuteContract[]
-) => Promise<
+export const useExecuteTx = (): ((msgs: MsgExecuteContract[]) => Promise<
   | {
       transactionHash: string
     }
@@ -124,9 +111,6 @@ export const useExecuteProposalTx = (): ((
     async (
       msgs: MsgExecuteContract[]
     ): Promise<{ transactionHash: string } | undefined> => {
-      console.log('useExecuteProposalTx.address', walletAddress)
-      console.log('useExecuteProposalTx.network', network)
-      console.log('useExecuteProposalTx.wallet', walletArgs.wallet)
       if (walletAddress.length === 0) return undefined
       try {
         const broadcaster = new MsgBroadcaster({
@@ -134,10 +118,6 @@ export const useExecuteProposalTx = (): ((
           walletStrategy: new WalletStrategy(walletArgs),
           endpoints: defaultEndpoints,
         })
-
-        console.log('useExecuteProposalTx.msgs', msgs)
-
-        console.log('useExecuteProposalTx.broadcaster', broadcaster)
 
         const injMsgs = msgs.map((msg) => {
           console.log('useExecuteProposalTx.msg', msg)
@@ -151,14 +131,10 @@ export const useExecuteProposalTx = (): ((
           })
         })
 
-        console.log('useExecuteProposalTx.injMsgs', injMsgs)
-
         const response = await broadcaster.broadcast({
           address: walletAddress,
           msgs: injMsgs,
         })
-
-        console.log('useExecuteProposalTx.response', response)
 
         return {
           ...response,

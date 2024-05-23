@@ -113,7 +113,6 @@ const CreateMultisig: NextPage = () => {
 
     const label = formEl.label.value.trim()
 
-    /** Preparing the transaction */
     const instantiateMsg: InstantiateMsg = {
       max_voting_period: max_voting_period,
       threshold: { absolute_count: { weight: required_weight } },

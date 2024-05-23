@@ -33,7 +33,7 @@ export const instantiateMultisigTx = async (
   return await executeTx([msg])
 }
 
-export const createProposalTx = async (
+export const executeTx = async (
   walletAddress: string,
   contract: string,
   message: ExecuteMsg,
@@ -45,13 +45,13 @@ export const createProposalTx = async (
   >
 ): Promise<{ transactionHash: string } | undefined> => {
   let msg: MsgExecuteContract
-  console.log('createProposalTx.message', message)
+  console.log('executeTx.message', message)
   msg = new MsgExecuteContract({
     sender: walletAddress,
     contractAddress: contract,
     msg: message,
   })
-  console.log('createProposalTx.msg', msg)
+  console.log('executeTx.msg', msg)
 
   return await executeTx([msg])
 }

@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { VoteInfo, ProposalResponse } from 'types/cw3'
+import { ExecuteMsg, Vote } from 'types/injective-cw3'
+import { executeTx } from 'util/tx'
+import { useExecuteTx } from 'hooks/useExecuteTx'
 
 const icons = {
   bell: (
@@ -137,6 +140,7 @@ function VoteButtons({
 }
 
 const Proposal: NextPage = () => {
+  const executeTxHook = useExecuteTx()
   const router = useRouter()
   const multisigAddress = router.query.multisigAddress as string
   const proposalId = router.query.proposalId as string
@@ -175,66 +179,83 @@ const Proposal: NextPage = () => {
       })
   }, [walletAddress, signingClient, multisigAddress, proposalId, timestamp])
 
-  const handleVote = async (vote: string) => {
-    signingClient
-      ?.execute(
+  const handleVote = async (vote: Vote) => {
+    setLoading(true)
+    setError('')
+
+    const msg: ExecuteMsg = {
+      vote: {
+        proposal_id: Number(proposalId),
+        vote: vote,
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          vote: { proposal_id: parseInt(proposalId), vote },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+    }
+
+    console.log('handleVote.response', response)
+    setLoading(false)
   }
 
   const handleExecute = async () => {
+    setLoading(true)
     setError('')
-    signingClient
-      ?.execute(
+
+    const msg: ExecuteMsg = {
+      execute: {
+        proposal_id: Number(proposalId),
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          execute: { proposal_id: parseInt(proposalId) },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+    }
+
+    console.log('handleExecute.response', response)
+    setLoading(false)
   }
 
   const handleClose = async () => {
+    setLoading(true)
     setError('')
-    signingClient
-      ?.execute(
+
+    const msg: ExecuteMsg = {
+      close: {
+        proposal_id: Number(proposalId),
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          close: { proposal_id: parseInt(proposalId) },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+    }
+
+    console.log('handleClose.response', response)
+    setLoading(false)
   }
 
   return (
