@@ -38,7 +38,7 @@ const Home: NextPage = () => {
     })
 
     const storedAddresses =
-      JSON.parse(localStorage.getItem('multisigAddresses')!) || []
+      JSON.parse(localStorage.getItem('stored-multisig-addresses')!) || []
 
     const existingAddress = storedAddresses.find(
       (item: { address: string }) => item.address === multisigAddress
@@ -49,7 +49,7 @@ const Home: NextPage = () => {
         const newEntry = { address: response.address, label: response.label }
         storedAddresses.push(newEntry)
         localStorage.setItem(
-          'multisigAddresses',
+          'stored-multisig-addresses',
           JSON.stringify(storedAddresses)
         )
 

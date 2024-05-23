@@ -14,10 +14,9 @@ const Home: NextPage = () => {
   const [storedAddresses, setStoredAddresses] = useState<AddressObj[]>([])
 
   useEffect(() => {
-    // Check if window is defined to ensure we are on the client side
     if (typeof window !== 'undefined') {
       const addresses =
-        JSON.parse(localStorage.getItem('multisigAddresses')!) || []
+        JSON.parse(localStorage.getItem('stored-multisig-addresses')!) || []
       setStoredAddresses(addresses)
     }
   }, [])
