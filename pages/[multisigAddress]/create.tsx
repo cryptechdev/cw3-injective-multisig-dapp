@@ -68,6 +68,8 @@ const ProposalCreate: NextPage = () => {
       console.log('error', e)
     }
 
+    console.log('ProposalCreate.response', response)
+
     const getProposalId = (response: any): string | null => {
       const logs = response.logs
       for (const log of logs) {
@@ -97,7 +99,7 @@ const ProposalCreate: NextPage = () => {
   return (
     <WalletLoader>
       <div className="flex flex-col w-full">
-        <div className="grid bg-base-100 place-items-center">
+        <div className="grid bg-base-100 place-items-center cursor-default">
           <form
             className="text-left container mx-auto max-w-lg"
             onSubmit={handleSubmit}

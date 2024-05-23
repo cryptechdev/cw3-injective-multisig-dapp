@@ -200,6 +200,8 @@ const Proposal: NextPage = () => {
       )
     } catch (e) {
       console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
     }
 
     console.log('handleVote.response', response)
@@ -226,6 +228,8 @@ const Proposal: NextPage = () => {
       )
     } catch (e) {
       console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
     }
 
     console.log('handleExecute.response', response)
@@ -252,6 +256,8 @@ const Proposal: NextPage = () => {
       )
     } catch (e) {
       console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
     }
 
     console.log('handleClose.response', response)
@@ -263,12 +269,12 @@ const Proposal: NextPage = () => {
       <div className="flex flex-col w-full">
         <div className="grid bg-base-100 place-items-center">
           {!proposal ? (
-            <div className="text-center m-8">
+            <div className="text-center m-8 cursor-default">
               No proposal with that ID found.
             </div>
           ) : (
             <div className="container mx-auto max-w-lg text-left">
-              <div className="card-title flex flex-row justify-between m-0">
+              <div className="card-title flex flex-row justify-between m-0 cursor-default">
                 <div>{proposal.title}</div>
                 {proposal.status === 'passed' && (
                   <div className="text-2xl text-warning">{icons.warning}</div>
@@ -283,11 +289,11 @@ const Proposal: NextPage = () => {
                   <div className="text-2xl text-info">{icons.bell}</div>
                 )}
               </div>
-              <div className="flex justify-between text-sm text-secondary">
+              <div className="flex justify-between text-sm text-secondary cursor-default">
                 <span>{proposal.id}</span>
                 <span>{JSON.stringify(proposal.expires)}</span>
               </div>
-              <p className="my-8">{proposal.description}</p>
+              <p className="my-8 cursor-default">{proposal.description}</p>
               <div className="p-2 border border-black rounded mb-8">
                 <code className="break-all">
                   {JSON.stringify(proposal.msgs)}

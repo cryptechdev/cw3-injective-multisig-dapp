@@ -23,7 +23,7 @@ export const instantiateMultisigTx = async (
   console.log('instantiateMultisigTx.message', message)
   msg = MsgInstantiateContract.fromJSON({
     sender: walletAddress,
-    admin: walletAddress,
+    admin: '',
     codeId: codeId,
     label: label,
     msg: toUtf8(JSON.stringify(message)),

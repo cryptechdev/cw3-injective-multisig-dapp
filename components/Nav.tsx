@@ -19,7 +19,7 @@ function Nav() {
 
   return (
     <div className="w-full px-2 md:px-16">
-      <nav className="flex flex-wrap text-center md:text-left md:flex flex-row w-full justify-between items-center py-2">
+      <nav className="flex flex-wrap text-center md:text-left md:flex flex-row w-full justify-between items-center py-2 cursor-default">
         <div className="flex items-center">
           <Link href="/">
             {PUBLIC_SITE_ICON_URL.length > 0 ? (
@@ -38,6 +38,7 @@ function Nav() {
         </div>
         <NavContractLabel />
         <ThemeToggle />
+        <span>{CHAIN_ID}</span>
         <div className="flex flex-col text-center">
           <div className="flex flex-grow md:flex-grow-0 max-w-full pl-4">
             <button
@@ -49,7 +50,6 @@ function Nav() {
               {walletAddress || 'Connect Wallet'}
             </button>
           </div>
-          <span>{CHAIN_ID}</span>
         </div>
       </nav>
     </div>

@@ -91,7 +91,7 @@ export default function ProposalCard({
 
   return (
     <Link href={`/${encodeURIComponent(multisigAddress)}/${id}`} passHref>
-      <div className="w-full card shadow-lg mb-4">
+      <div className="w-full rounded border mb-4 bg-base-200 shadow-lg hover:shadow border-secondary hover:border-primary transition-all duration-300 ease-in-out">
         <div className="card-body w-full grid grid-cols-1 py-4 px-8">
           <div className="card-title flex flex-row justify-between m-0">
             <div>{title}</div>

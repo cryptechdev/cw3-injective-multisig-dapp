@@ -1,10 +1,20 @@
 import type { NextPage } from 'next'
 import WalletLoader from 'components/WalletLoader'
 import { useSigningClient } from 'contexts/cosmwasm'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import ProposalCard from 'components/ProposalCard'
 import { ProposalListResponse, ProposalResponse, Timestamp } from 'types/cw3'
+import { Network, getNetworkEndpoints } from '@injectivelabs/networks'
+
+const MULTISIG_CODE_ID =
+  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
+
+const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-1'
+
+const REST_ENDPOINT =
+  process.env.NEXT_PUBLIC_REST_ENDPOINT ||
+  'https://sentry.lcd.injective.network'
 
 // TODO: review union Expiration from types/cw3
 type Expiration = {
@@ -22,14 +32,41 @@ const Home: NextPage = () => {
   const [hideLoadMore, setHideLoadMore] = useState(false)
   const [loading, setLoading] = useState(false)
   const [startBefore, setStartBefore] = useState<number | null>(null)
+  const [label, setLabel] = useState('')
+  const [address, setAddress] = useState('')
+  const [balance, setBalance] = useState('')
 
   useEffect(() => {
+    if (multisigAddress.length === 0 || !signingClient) {
+      setLabel('')
+      return
+    }
+
+    signingClient.getContract(multisigAddress).then((response) => {
+      setLabel(response.label)
+      setAddress(response.address)
+    })
+  }, [multisigAddress, signingClient])
+
+  useEffect(() => {
+    if (address.length === 0 || !signingClient) {
+      return
+    }
+
+    signingClient?.getBalance(address, 'inj').then((response) => {
+      setBalance(response.amount)
+    })
+  }, [address, signingClient])
+
+  const fetchProposals = useCallback(() => {
     if (walletAddress.length === 0 || !signingClient) {
       setReversedProposals([])
       setHideLoadMore(false)
       return
     }
+
     setLoading(true)
+
     signingClient
       .queryContractSmart(multisigAddress, {
         reverse_proposals: {
@@ -41,30 +78,50 @@ const Home: NextPage = () => {
         if (response.proposals.length < 10) {
           setHideLoadMore(true)
         }
-        setReversedProposals((prevProposals) =>
-          prevProposals.concat(response.proposals)
-        )
+
+        // Filter out duplicates
+        setReversedProposals((prevProposals) => {
+          const newProposals = response.proposals.filter(
+            (proposal) =>
+              !prevProposals.some(
+                (prevProposal) => prevProposal.id === proposal.id
+              )
+          )
+          return prevProposals.concat(newProposals)
+        })
       })
-      .then(() => setLoading(false))
       .catch((err) => {
+        console.log('Error:', err)
+      })
+      .finally(() => {
         setLoading(false)
-        console.log('err', err)
       })
   }, [walletAddress, signingClient, multisigAddress, startBefore])
 
+  useEffect(() => {
+    fetchProposals()
+  }, [fetchProposals])
+
   return (
     <WalletLoader loading={reversedProposals.length === 0 && loading}>
-      <div className="w-full">
+      <div className="w-full cursor-default">
         <div className="flex flex-col w-full max-w-[1200px] m-auto px-16">
-          <div className="flex flex-row justify-between items-center my-16 px-8">
+          <div className="flex flex-col items-center my-16 px-8 gap-4">
+            <h1 className="text-xl font-bold sm:text-5xl">{label}</h1>
+            <h1 className="text-md sm:text-2xl">{address}</h1>
+            <h1 className="text-lg font-bold sm:text-3xl">{balance} INJ</h1>
+          </div>
+        </div>
+        <div className="flex flex-col w-full max-w-[1200px] m-auto px-16">
+          <div className="flex flex-row justify-between items-center my-8 px-8">
             <h1 className="text-lg font-bold sm:text-3xl">Proposals</h1>
             <button
-              className="btn btn-primary btn-sm text-lg"
+              className="btn btn-primary btn-md text-lg"
               onClick={() =>
                 router.push(`/${encodeURIComponent(multisigAddress)}/create`)
               }
             >
-              + Create
+              + Create Proposal
             </button>
           </div>
         </div>

@@ -11,7 +11,7 @@ const Home: NextPage = () => {
     <WalletLoader>
       <div className="flex flex-col w-full">
         <div className="grid bg-base-100 place-items-center">
-          <h1 className="text-4xl font-bold mb-8">Existing...</h1>
+          <h1 className="text-4xl font-bold mb-8 cursor-default">Existing</h1>
           <div className="flex w-full max-w-xl xl:max-w-2xl">
             <div className="relative rounded-xl shadow-sm w-full">
               <input
@@ -41,9 +41,9 @@ const Home: NextPage = () => {
             </div>
           </div>
         </div>
-        <div className="divider p-8 before:bg-secondary after:bg-secondary before:h-[1px] after:h-[1px]"></div>
+        <div className="divider p-8 pt-16 before:bg-secondary after:bg-secondary before:h-[1px] after:h-[1px]"></div>
         <div className="flex flex-col items-center">
-          <h1 className="text-4xl font-bold my-8">New...</h1>
+          <h1 className="text-4xl font-bold my-8 cursor-default">New</h1>
           <div className="w-full max-w-xl xl:max-w-2xl">
             <button
               className="btn btn-primary btn-lg font-semibold hover:text-base-100 text-2xl rounded-xl w-full"
