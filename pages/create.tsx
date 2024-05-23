@@ -5,26 +5,9 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
+import { instantiateMultisigTx } from 'util/tx'
 import { InstantiateMsg, Voter } from 'types/injective-cw3'
-import {
-  TxRaw,
-  MsgSend,
-  BaseAccount,
-  TxRestClient,
-  ChainRestAuthApi,
-  createTransaction,
-  CosmosTxV1Beta1Tx,
-  BroadcastModeKeplr,
-  ChainRestTendermintApi,
-  getTxRawFromTxRawOrDirectSignResponse,
-  Msgs,
-  MsgArg,
-} from '@injectivelabs/sdk-ts'
-import { BigNumberInBase } from '@injectivelabs/utils'
-import { getStdFee, DEFAULT_BLOCK_TIMEOUT_HEIGHT } from '@injectivelabs/utils'
-import { ChainId } from '@injectivelabs/ts-types'
-import { TransactionException } from '@injectivelabs/exceptions'
-import { Msg, SignDoc } from '@keplr-wallet/types'
+import useExecuteInstantiateTx from 'hooks/useExecuteTx'
 
 declare global {
   interface Window {
@@ -33,13 +16,9 @@ declare global {
 }
 
 const MULTISIG_CODE_ID =
-  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 1
+  parseInt(process.env.NEXT_PUBLIC_MULTISIG_CODE_ID as string) || 4
 
 const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || 'injective-1'
-
-const REST_ENDPOINT =
-  process.env.NEXT_PUBLIC_REST_ENDPOINT ||
-  'https://sentry.lcd.injective.network'
 
 const getKeplr = async (chainId: string) => {
   await window.keplr.enable(chainId)
@@ -50,26 +29,6 @@ const getKeplr = async (chainId: string) => {
   console.log('getKeplr', offlineSigner, accounts, key)
 
   return { offlineSigner, accounts, key }
-}
-
-const broadcastTx = async (chainId: string, txRaw: TxRaw) => {
-  const keplr = await getKeplr(chainId)
-  const result = await keplr.offlineSigner.sendTx(
-    chainId,
-    CosmosTxV1Beta1Tx.TxRaw.encode(txRaw).finish(),
-    BroadcastModeKeplr.Sync
-  )
-
-  console.log('broadcastTx', result)
-
-  if (!result || result.length === 0) {
-    throw new TransactionException(
-      new Error('Transaction failed to be broadcasted'),
-      { contextModule: 'Keplr' }
-    )
-  }
-
-  return Buffer.from(result).toString('hex')
 }
 
 function AddressRow({ idx, readOnly }: { idx: number; readOnly: boolean }) {
@@ -128,6 +87,7 @@ interface MultisigFormElement extends HTMLFormElement {
 }
 
 const CreateMultisig: NextPage = () => {
+  const executeInstantiateTx = useExecuteInstantiateTx()
   const router = useRouter()
   const [count, setCount] = useState(2)
   const [contractAddress, setContractAddress] = useState('')
@@ -151,33 +111,12 @@ const CreateMultisig: NextPage = () => {
       time: parseInt(formEl.duration.value?.trim()),
     }
 
-    /** Account Details **/
-    const keplr = await getKeplr(CHAIN_ID)
-    const chainRestAuthApi = new ChainRestAuthApi(REST_ENDPOINT)
-    const accountDetailsResponse = await chainRestAuthApi.fetchAccount(
-      walletAddress
-    )
-    const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse)
-
-    /** Block Details */
-    const chainRestTendermintApi = new ChainRestTendermintApi(REST_ENDPOINT)
-    const latestBlock = await chainRestTendermintApi.fetchLatestBlock()
-    const latestHeight = latestBlock.header.height
-    const timeoutHeight = new BigNumberInBase(latestHeight).plus(
-      DEFAULT_BLOCK_TIMEOUT_HEIGHT
-    )
     const label = formEl.label.value.trim()
 
-    /** Preparing the transaction */
     const instantiateMsg: InstantiateMsg = {
       max_voting_period: max_voting_period,
       threshold: { absolute_count: { weight: required_weight } },
       voters: voters,
-    }
-
-    const msg: MsgArg = {
-      type: label,
-      message: instantiateMsg,
     }
 
     // @ebaker TODO: add more validation
@@ -190,47 +129,55 @@ const CreateMultisig: NextPage = () => {
     const key = await window.keplr.getKey(CHAIN_ID)
     const pubKey = key.publicKey
 
-    const { txRaw, signDoc } = createTransaction({
-      pubKey: pubKey,
-      chainId: CHAIN_ID,
-      fee: getStdFee({}),
-      message: msg,
-      sequence: baseAccount.sequence,
-      timeoutHeight: timeoutHeight.toNumber(),
-      accountNumber: baseAccount.accountNumber,
-    })
+    console.log('pubKey', pubKey)
 
-    console.log('txRaw', txRaw, signDoc)
+    let response
+    try {
+      response = await instantiateMultisigTx(
+        walletAddress,
+        MULTISIG_CODE_ID,
+        CHAIN_ID,
+        pubKey,
+        label,
+        instantiateMsg,
+        executeInstantiateTx
+      )
+    } catch (e) {
+      console.log('error', e)
+    }
 
-    // Sign the transaction
-    const { offlineSigner } = await getKeplr(CHAIN_ID)
-    const directSignResponse = await offlineSigner.signDirect(
-      walletAddress,
-      signDoc as unknown as SignDoc
+    const extractContractAddress = (response: any): string | null => {
+      try {
+        const logs = response.logs
+        for (const log of logs) {
+          for (const event of log.events) {
+            for (const attribute of event.attributes) {
+              if (attribute.key === 'contract_address') {
+                return attribute.value.replace(/\"/g, '') // Remove extra quotes
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error extracting contract address:', error)
+      }
+      return null
+    }
+
+    console.log(
+      'create.extractContractAddress',
+      extractContractAddress(response)
     )
-    console.log('directSignResponse', directSignResponse)
+    setContractAddress(extractContractAddress(response) || '')
 
-    // Broadcast the transaction
-    const txHash = await broadcastTx(CHAIN_ID, txRaw)
-    console.log('txHash', txHash)
-    const txRestClient = new TxRestClient(REST_ENDPOINT)
-    const response = await txRestClient.fetchTxPoll(txHash)
-
-    console.log('response', response)
-
-    // Handle response
-    /* if (response.contractAddress.length > 0) {
-      setContractAddress(response.contractAddress);
-    } */
     setLoading(false)
   }
 
-  console.log('contractAddress', contractAddress)
   const complete = contractAddress.length > 0
 
   return (
     <WalletLoader>
-      <div className="text-center container mx-auto max-w-lg">
+      <div className="text-center container mx-auto max-w-lg cursor-default">
         <h1 className="text-5xl font-bold mb-8">New Multisig</h1>
         <form
           className="container mx-auto max-w-lg mb-8"
@@ -339,8 +286,9 @@ const CreateMultisig: NextPage = () => {
         {error && <LineAlert variant="error" msg={error} />}
 
         {contractAddress !== '' && (
-          <div className="text-right">
+          <div className="flex flex-col w-full text-right">
             <LineAlert variant="success" msg={`Success!`} />
+            <span className="py-4">{contractAddress}</span>
             <button
               className="mt-4 box-border px-4 py-2 btn btn-primary"
               onClick={(e) => {

@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { VoteInfo, ProposalResponse } from 'types/cw3'
+import { ExecuteMsg, Vote } from 'types/injective-cw3'
+import { executeTx } from 'util/tx'
+import { useExecuteTx } from 'hooks/useExecuteTx'
 
 const icons = {
   bell: (
@@ -137,6 +140,7 @@ function VoteButtons({
 }
 
 const Proposal: NextPage = () => {
+  const executeTxHook = useExecuteTx()
   const router = useRouter()
   const multisigAddress = router.query.multisigAddress as string
   const proposalId = router.query.proposalId as string
@@ -175,66 +179,89 @@ const Proposal: NextPage = () => {
       })
   }, [walletAddress, signingClient, multisigAddress, proposalId, timestamp])
 
-  const handleVote = async (vote: string) => {
-    signingClient
-      ?.execute(
+  const handleVote = async (vote: Vote) => {
+    setLoading(true)
+    setError('')
+
+    const msg: ExecuteMsg = {
+      vote: {
+        proposal_id: Number(proposalId),
+        vote: vote,
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          vote: { proposal_id: parseInt(proposalId), vote },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
+    }
+
+    console.log('handleVote.response', response)
+    setLoading(false)
   }
 
   const handleExecute = async () => {
+    setLoading(true)
     setError('')
-    signingClient
-      ?.execute(
+
+    const msg: ExecuteMsg = {
+      execute: {
+        proposal_id: Number(proposalId),
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          execute: { proposal_id: parseInt(proposalId) },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
+    }
+
+    console.log('handleExecute.response', response)
+    setLoading(false)
   }
 
   const handleClose = async () => {
+    setLoading(true)
     setError('')
-    signingClient
-      ?.execute(
+
+    const msg: ExecuteMsg = {
+      close: {
+        proposal_id: Number(proposalId),
+      },
+    }
+
+    let response
+    try {
+      response = await executeTx(
         walletAddress,
         multisigAddress,
-        {
-          close: { proposal_id: parseInt(proposalId) },
-        },
-        defaultFee
+        msg,
+        executeTxHook
       )
-      .then((response) => {
-        setTimestamp(new Date())
-        setTransactionHash(response.transactionHash)
-      })
-      .catch((err) => {
-        setLoading(false)
-        setError(err.message)
-      })
+    } catch (e) {
+      console.log('error', e)
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      setError(errorMessage)
+    }
+
+    console.log('handleClose.response', response)
+    setLoading(false)
   }
 
   return (
@@ -242,12 +269,12 @@ const Proposal: NextPage = () => {
       <div className="flex flex-col w-full">
         <div className="grid bg-base-100 place-items-center">
           {!proposal ? (
-            <div className="text-center m-8">
+            <div className="text-center m-8 cursor-default">
               No proposal with that ID found.
             </div>
           ) : (
             <div className="container mx-auto max-w-lg text-left">
-              <div className="card-title flex flex-row justify-between m-0">
+              <div className="card-title flex flex-row justify-between m-0 cursor-default">
                 <div>{proposal.title}</div>
                 {proposal.status === 'passed' && (
                   <div className="text-2xl text-warning">{icons.warning}</div>
@@ -262,11 +289,11 @@ const Proposal: NextPage = () => {
                   <div className="text-2xl text-info">{icons.bell}</div>
                 )}
               </div>
-              <div className="flex justify-between text-sm text-secondary">
+              <div className="flex justify-between text-sm text-secondary cursor-default">
                 <span>{proposal.id}</span>
                 <span>{JSON.stringify(proposal.expires)}</span>
               </div>
-              <p className="my-8">{proposal.description}</p>
+              <p className="my-8 cursor-default">{proposal.description}</p>
               <div className="p-2 border border-black rounded mb-8">
                 <code className="break-all">
                   {JSON.stringify(proposal.msgs)}

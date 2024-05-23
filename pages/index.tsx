@@ -1,17 +1,31 @@
 import type { NextPage } from 'next'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import WalletLoader from 'components/WalletLoader'
+
+type AddressObj = {
+  address: string
+  label: string
+}
 
 const Home: NextPage = () => {
   const router = useRouter()
   const [address, setAddress] = useState('')
+  const [storedAddresses, setStoredAddresses] = useState<AddressObj[]>([])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const addresses =
+        JSON.parse(localStorage.getItem('stored-multisig-addresses')!) || []
+      setStoredAddresses(addresses)
+    }
+  }, [])
 
   return (
     <WalletLoader>
       <div className="flex flex-col w-full">
         <div className="grid bg-base-100 place-items-center">
-          <h1 className="text-4xl font-bold mb-8">Existing...</h1>
+          <h1 className="text-4xl font-bold mb-8 cursor-default">Existing</h1>
           <div className="flex w-full max-w-xl xl:max-w-2xl">
             <div className="relative rounded-xl shadow-sm w-full">
               <input
@@ -40,10 +54,21 @@ const Home: NextPage = () => {
               </button>
             </div>
           </div>
+          <div className="flex flex-col gap-4 pt-8">
+            {storedAddresses.map((addressObj: AddressObj) => (
+              <button
+                key={addressObj.address}
+                className="btn btn-primary btn-md font-semibold hover:text-base-100 text-xl rounded-xl w-full"
+                onClick={() => router.push(`/${addressObj.address}`)}
+              >
+                {addressObj.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="divider p-8 before:bg-secondary after:bg-secondary before:h-[1px] after:h-[1px]"></div>
+        <div className="divider p-8 pt-16 before:bg-secondary after:bg-secondary before:h-[1px] after:h-[1px]"></div>
         <div className="flex flex-col items-center">
-          <h1 className="text-4xl font-bold my-8">New...</h1>
+          <h1 className="text-4xl font-bold my-8 cursor-default">New</h1>
           <div className="w-full max-w-xl xl:max-w-2xl">
             <button
               className="btn btn-primary btn-lg font-semibold hover:text-base-100 text-2xl rounded-xl w-full"

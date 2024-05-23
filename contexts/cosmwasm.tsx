@@ -12,6 +12,7 @@ let { Provider } = (CosmWasmContext =
     loading: false,
     error: null,
     connectWallet: () => {},
+    wallet: null,
     disconnect: () => {},
   }))
 
