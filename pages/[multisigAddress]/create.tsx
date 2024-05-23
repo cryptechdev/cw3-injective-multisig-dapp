@@ -7,6 +7,7 @@ import LineAlert from 'components/LineAlert'
 import { ExecuteMsg } from 'types/injective-cw3'
 import { useExecuteTx } from 'hooks/useExecuteTx'
 import { executeTx } from 'util/tx'
+import cloneDeep from 'lodash.clonedeep'
 
 interface FormElements extends HTMLFormControlsCollection {
   label: HTMLInputElement
@@ -22,7 +23,7 @@ const ProposalCreate: NextPage = () => {
   const executeTxHook = useExecuteTx()
   const router = useRouter()
   const multisigAddress = (router.query.multisigAddress || '') as string
-  const { walletAddress, signingClient } = useSigningClient()
+  const { walletAddress } = useSigningClient()
   const [transactionHash, setTransactionHash] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -46,6 +47,17 @@ const ProposalCreate: NextPage = () => {
     ) {
       setLoading(false)
       setError('All fields are required.')
+    }
+
+    // Clone the JSON string to avoid prototype poisoning
+    const jsonClone = cloneDeep(jsonStr)
+    let json: any
+    try {
+      json = JSON.parse(jsonClone)
+    } catch (e) {
+      setLoading(false)
+      setError('Error in JSON message.')
+      return
     }
 
     const proposeMsg: ExecuteMsg = {
