@@ -1,8 +1,3 @@
-## Preview
-
-<p align="center" width="100%">
-    <img alt="cw3-fixed-multisig preview" src="https://arweave.net/VDl3V81NXfvDZ_ciYIyhwcMeUWN0vuBelNoIBd_e8_k/data.gif">
-</p>
 
 ## Summary
 
