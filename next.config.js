@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 /* config options here */
-const config = {
+/* const config = {
   output: 'export',
   images: {
       unoptimized: true,
@@ -16,5 +16,8 @@ const config = {
   staticPageGenerationTimeout: 1000,
   reactStrictMode: false
 }
+ */
 
-module.exports = config;
+module.exports = {
+  reactStrictMode: true,
+}
