@@ -1,13 +1,14 @@
 import type { NextPage } from 'next'
 import WalletLoader from 'components/WalletLoader'
 import { useSigningClient } from 'contexts/cosmwasm'
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
 import { ExecuteMsg } from 'types/injective-cw3'
 import { useExecuteTx } from 'hooks/useExecuteTx'
 import { executeTx } from 'util/tx'
 import cloneDeep from 'lodash.clonedeep'
+import { prettifyJson } from 'util/conversion'
 
 interface FormElements extends HTMLFormControlsCollection {
   label: HTMLInputElement
@@ -19,6 +20,24 @@ interface ProposalFormElement extends HTMLFormElement {
   readonly elements: FormElements
 }
 
+const encodeToBase64 = (data: string) => {
+  return window.btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+}
+
+const decodeFromBase64 = (base64String: string) => {
+  try {
+    return JSON.parse(decodeURIComponent(escape(window.atob(base64String))))
+  } catch (error) {
+    console.error('Error decoding base64:', error)
+    return null
+  }
+}
+
+const prettyPrint = (data: any) => {
+  const formattedJsonString = prettifyJson(data)
+  return formattedJsonString
+}
+
 const ProposalCreate: NextPage = () => {
   const executeTxHook = useExecuteTx()
   const router = useRouter()
@@ -28,6 +47,66 @@ const ProposalCreate: NextPage = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [proposalID, setProposalID] = useState('')
+  const [dataType, setDataType] = useState<'json' | 'base64' | 'unknown'>(
+    'unknown'
+  )
+
+  const [formData, setFormData] = useState({
+    label: '',
+    description: '',
+    json: '',
+  })
+
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target
+    setFormData({
+      ...formData,
+      [name]: value.trim(),
+    })
+  }
+
+  const detectJsonOrBase64 = (str: string): 'json' | 'base64' | 'unknown' => {
+    try {
+      // Try to parse the string as JSON
+      JSON.parse(str)
+      return 'json'
+    } catch (error) {
+      // If parsing as JSON fails, check if it's base64-encoded
+      if (/^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0) {
+        try {
+          // Try to decode the string from base64
+          atob(str)
+          return 'base64'
+        } catch (error) {
+          // Decoding failed, so it's not valid base64
+          return 'unknown'
+        }
+      } else {
+        // Not valid base64 format
+        return 'unknown'
+      }
+    }
+  }
+
+  const { json } = formData
+  const [encodedMsgs, setEncodedMsgs] = useState('')
+  const [decodedMsgs, setDecodedMsgs] = useState<any[]>([])
+  const [prettyMsgs, setPrettyMsgs] = useState('')
+
+  useEffect(() => {
+    const dataType = detectJsonOrBase64(json)
+    setDataType(dataType)
+
+    const encoded = encodeToBase64(json)
+    const decoded = decodeFromBase64(json)
+    const pretty = prettyPrint(json)
+
+    setEncodedMsgs(encoded)
+    setDecodedMsgs(decoded)
+    setPrettyMsgs(pretty)
+  }, [json])
 
   const handleSubmit = async (event: FormEvent<ProposalFormElement>) => {
     event.preventDefault()
@@ -38,7 +117,7 @@ const ProposalCreate: NextPage = () => {
 
     const title = currentTarget.label.value.trim()
     const description = currentTarget.description.value.trim()
-    const jsonStr = currentTarget.json.value.trim()
+    let jsonStr = currentTarget.json.value.trim()
 
     if (
       title.length === 0 ||
@@ -47,6 +126,18 @@ const ProposalCreate: NextPage = () => {
     ) {
       setLoading(false)
       setError('All fields are required.')
+      return
+    }
+
+    // If the data is base64-encoded, decode it
+    if (dataType === 'base64') {
+      try {
+        jsonStr = decodeFromBase64(jsonStr)
+      } catch (error) {
+        setLoading(false)
+        setError('Error decoding base64 data.')
+        return
+      }
     }
 
     // Clone the JSON string to avoid prototype poisoning
@@ -83,6 +174,10 @@ const ProposalCreate: NextPage = () => {
     console.log('ProposalCreate.response', response)
 
     const getProposalId = (response: any): string | null => {
+      if (!response || !response.logs) {
+        return null
+      }
+
       const logs = response.logs
       for (const log of logs) {
         for (const event of log.events) {
@@ -110,45 +205,88 @@ const ProposalCreate: NextPage = () => {
 
   return (
     <WalletLoader>
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full pb-12">
         <div className="grid bg-base-100 place-items-center cursor-default">
           <form
             className="text-left container mx-auto max-w-lg"
             onSubmit={handleSubmit}
           >
             <h1 className="text-4xl my-8 text-bold">Create Proposal</h1>
-            <label className="block">Title</label>
+            <label className="block mb-2">Title</label>
             <input
               className="input input-bordered rounded box-border p-3 w-full focus:input-primary text-xl"
               name="label"
               readOnly={complete}
             />
-            <label className="block mt-4">Description</label>
+            <label className="block mt-4 mb-2">Description</label>
             <textarea
               className="input input-bordered rounded box-border p-3 h-24 w-full focus:input-primary text-xl"
               name="description"
               readOnly={complete}
             />
-            <label className="block mt-4">JSON Message Array</label>
+            <label className="block mt-4 mb-2">Message</label>
             <textarea
               className="input input-bordered rounded box-border p-3 w-full font-mono h-80 focus:input-primary text-x"
               cols={7}
               name="json"
               readOnly={complete}
+              onChange={handleChange}
               placeholder='[{"bank":{"send":{"amount":[{"amount":"1000000000000000","denom":"inj"}],"to_address":"inj1u6szhpax4jfpastv7rw4ddu7yn95s96f5pes0p"}}}]'
             />
-            {!complete && (
-              <button
-                className={`btn btn-primary text-lg mt-8 ml-auto ${
-                  loading ? 'loading' : ''
-                }`}
-                style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
-                type="submit"
-                disabled={loading}
-              >
-                Create Proposal
-              </button>
+            <div className="flex mt-4 mb-2 gap-2">
+              <label className="">Data Type:</label>
+              <span className="font-bold">{dataType}</span>
+            </div>
+            {dataType === 'json' && (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="pt-4">Base64 Encoded</span>
+                <div className="p-2 border border-black rounded">
+                  <code className="break-all">{encodedMsgs}</code>
+                </div>
+              </div>
             )}
+            {dataType === 'base64' && (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="pt-4">Base64 Decoded</span>
+                <div className="p-2 border border-black rounded">
+                  <code className="break-all">{decodedMsgs}</code>
+                </div>
+              </div>
+            )}
+            {dataType === 'json' && (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="pt-4">Pretty</span>
+                <div className="p-2 border border-black rounded">
+                  <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
+                    {prettyMsgs}
+                  </pre>
+                </div>
+              </div>
+            )}
+            {dataType === 'base64' && (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="pt-4">Pretty</span>
+                <div className="p-2 border border-black rounded">
+                  <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
+                    {prettyPrint(decodedMsgs)}
+                  </pre>
+                </div>
+              </div>
+            )}
+            <div className="flex">
+              {!complete && (
+                <button
+                  className={`btn btn-primary text-lg mt-8 ml-auto ${
+                    loading ? 'loading' : ''
+                  }`}
+                  style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
+                  type="submit"
+                  disabled={loading}
+                >
+                  Create Proposal
+                </button>
+              )}
+            </div>
             {error && (
               <div className="mt-8">
                 <LineAlert variant="error" msg={error} />

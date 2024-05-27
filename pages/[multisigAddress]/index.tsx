@@ -27,7 +27,7 @@ const Home: NextPage = () => {
   const [balance, setBalance] = useState('')
 
   useEffect(() => {
-    if (multisigAddress.length === 0 || !signingClient) {
+    if (!multisigAddress || !signingClient) {
       setLabel('')
       return
     }

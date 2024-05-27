@@ -4,10 +4,12 @@ import { useSigningClient } from 'contexts/cosmwasm'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import LineAlert from 'components/LineAlert'
-import { VoteInfo, ProposalResponse } from 'types/cw3'
+import { VoteInfo, ProposalResponse, CosmosMsgFor_Empty_1 } from 'types/cw3'
 import { ExecuteMsg, Vote } from 'types/injective-cw3'
 import { executeTx } from 'util/tx'
 import { useExecuteTx } from 'hooks/useExecuteTx'
+import { set } from 'lodash'
+import { prettifyJson } from 'util/conversion'
 
 const icons = {
   bell: (
@@ -153,6 +155,13 @@ const Proposal: NextPage = () => {
   const [votes, setVotes] = useState([])
   const [timestamp, setTimestamp] = useState(new Date())
   const [transactionHash, setTransactionHash] = useState('')
+  const [expireUtcDateString, setExpireUtcDateString] = useState('')
+  const [mode, setMode] = useState('original')
+
+  const setOriginalMode = () => setMode('original')
+  const setEncodedMode = () => setMode('encoded')
+  const setDecodedMode = () => setMode('decoded')
+  const setPrettyMode = () => setMode('pretty')
 
   useEffect(() => {
     if (walletAddress.length === 0 || !signingClient) {
@@ -233,6 +242,11 @@ const Proposal: NextPage = () => {
     }
 
     console.log('handleExecute.response', response)
+    console.log(
+      'handleExecute.response.transactionHash',
+      response!.transactionHash
+    )
+    setTransactionHash(response!.transactionHash)
     setLoading(false)
   }
 
@@ -264,6 +278,41 @@ const Proposal: NextPage = () => {
     setLoading(false)
   }
 
+  useEffect(() => {
+    if (proposal && proposal.expires && 'at_time' in proposal.expires) {
+      const timestamp = proposal.expires.at_time
+      const expireMs = parseInt(String(timestamp), 10) / 1e6
+
+      if (!isNaN(expireMs)) {
+        const expireDate = new Date(expireMs)
+        const expireUtcDateString = expireDate
+          .toISOString()
+          .replace('T', ' ')
+          .replace('Z', ' UTC')
+        setExpireUtcDateString(expireUtcDateString)
+      }
+    }
+  }, [proposal])
+
+  // Encode the proposal messages to Base64
+  const encodeToBase64 = (data: CosmosMsgFor_Empty_1[]) => {
+    return btoa(JSON.stringify(data))
+  }
+
+  // Decode the Base64 string back to JSON
+  const decodeFromBase64 = (base64String: string) => {
+    return JSON.parse(atob(base64String))
+  }
+
+  const prettyPrint = (data: any) => {
+    const formattedJsonString = prettifyJson(data)
+    return formattedJsonString
+  }
+
+  // Check if proposal and proposal.msgs are defined
+  const encodedMsgs = proposal?.msgs ? encodeToBase64(proposal.msgs) : ''
+  const decodedMsgs = encodedMsgs ? decodeFromBase64(encodedMsgs) : []
+
   return (
     <WalletLoader loading={loading}>
       <div className="flex flex-col w-full">
@@ -289,15 +338,34 @@ const Proposal: NextPage = () => {
                   <div className="text-2xl text-info">{icons.bell}</div>
                 )}
               </div>
-              <div className="flex justify-between text-sm text-secondary cursor-default">
-                <span>{proposal.id}</span>
-                <span>{JSON.stringify(proposal.expires)}</span>
+              <div className="flex justify-between text-secondary cursor-default pt-4">
+                <div className="flex flex-col text-sm">
+                  <span>Proposal ID</span>
+                  <span className="text-secondary text-lg">{proposal.id}</span>
+                </div>
+                <div className="flex flex-col text-sm text-right">
+                  <span>Expiration Date</span>
+                  <span className="text-secondary text-lg">
+                    {expireUtcDateString}
+                  </span>
+                </div>
               </div>
               <p className="my-8 cursor-default">{proposal.description}</p>
-              <div className="p-2 border border-black rounded mb-8">
+              <span className="flex pb-1">JSON Message</span>
+              <div className="p-2 border border-black rounded mb-4">
                 <code className="break-all">
                   {JSON.stringify(proposal.msgs)}
                 </code>
+              </div>
+              <span className="flex pb-1">Base64</span>
+              <div className="p-2 border border-black rounded mb-4">
+                <code className="break-all">{encodedMsgs}</code>
+              </div>
+              <span className="flex pb-1">Pretty</span>
+              <div className="p-2 border border-black rounded mb-8">
+                <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
+                  {prettyPrint(proposal?.msgs)}
+                </pre>
               </div>
 
               <VoteButtons

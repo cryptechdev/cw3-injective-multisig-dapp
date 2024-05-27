@@ -36,3 +36,29 @@ export const zeroStakingCoin = {
   amount: '0',
   denom: process.env.NEXT_PUBLIC_STAKING_DENOM || 'uinj',
 }
+
+export const prettifyJson = (jsonString: string | any[]) => {
+  if (typeof jsonString !== 'string') {
+    jsonString = JSON.stringify(jsonString)
+  }
+
+  let result = ''
+  let indent = 0
+  const newline = '\n'
+  const tab = '  '
+
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString[i]
+    if (char === '{' || char === '[') {
+      result += char + newline + tab.repeat(++indent)
+    } else if (char === '}' || char === ']') {
+      result += newline + tab.repeat(--indent) + char
+    } else if (char === ',') {
+      result += char + newline + tab.repeat(indent)
+    } else {
+      result += char
+    }
+  }
+
+  return result
+}
