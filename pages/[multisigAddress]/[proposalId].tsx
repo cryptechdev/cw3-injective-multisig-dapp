@@ -293,6 +293,37 @@ const Proposal: NextPage = () => {
     return JSON.parse(atob(base64String))
   }
 
+  // Decode the messages in the proposal
+  const decodedMessages =
+    proposal?.msgs?.map((item: any) => {
+      if (item.wasm) {
+        if (item.wasm.execute && item.wasm.execute.msg) {
+          return {
+            ...item,
+            wasm: {
+              ...item.wasm,
+              execute: {
+                ...item.wasm.execute,
+                msg: decodeFromBase64(item.wasm.execute.msg),
+              },
+            },
+          }
+        } else if (item.wasm.instantiate && item.wasm.instantiate.msg) {
+          return {
+            ...item,
+            wasm: {
+              ...item.wasm,
+              instantiate: {
+                ...item.wasm.instantiate,
+                msg: decodeFromBase64(item.wasm.instantiate.msg),
+              },
+            },
+          }
+        }
+      }
+      return item
+    }) || []
+
   const prettyPrint = (data: any) => {
     const formattedJsonString = prettifyJson(data)
     return formattedJsonString
@@ -351,9 +382,15 @@ const Proposal: NextPage = () => {
                 <code className="break-all">{encodedMsgs}</code>
               </div>
               <span className="flex pb-1">Pretty</span>
-              <div className="p-2 border border-black rounded mb-8">
+              {/* <div className="p-2 border border-black rounded">
                 <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
                   {prettyPrint(proposal?.msgs)}
+                </pre>
+              </div>
+              <span className="flex pb-1">Decoded Messages</span> */}
+              <div className="p-2 border border-black rounded mb-8">
+                <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
+                  {prettyPrint(decodedMessages)}
                 </pre>
               </div>
 
