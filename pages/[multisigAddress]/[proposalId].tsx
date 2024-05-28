@@ -153,15 +153,8 @@ const Proposal: NextPage = () => {
   const [error, setError] = useState('')
   const [proposal, setProposal] = useState<ProposalResponse | null>(null)
   const [votes, setVotes] = useState([])
-  const [timestamp, setTimestamp] = useState(new Date())
   const [transactionHash, setTransactionHash] = useState('')
   const [expireUtcDateString, setExpireUtcDateString] = useState('')
-  const [mode, setMode] = useState('original')
-
-  const setOriginalMode = () => setMode('original')
-  const setEncodedMode = () => setMode('encoded')
-  const setDecodedMode = () => setMode('decoded')
-  const setPrettyMode = () => setMode('pretty')
 
   useEffect(() => {
     if (walletAddress.length === 0 || !signingClient) {
@@ -186,7 +179,7 @@ const Proposal: NextPage = () => {
         setLoading(false)
         setError(err.message)
       })
-  }, [walletAddress, signingClient, multisigAddress, proposalId, timestamp])
+  }, [walletAddress, signingClient, multisigAddress, proposalId])
 
   const handleVote = async (vote: Vote) => {
     setLoading(true)
@@ -242,11 +235,7 @@ const Proposal: NextPage = () => {
     }
 
     console.log('handleExecute.response', response)
-    console.log(
-      'handleExecute.response.transactionHash',
-      response!.transactionHash
-    )
-    setTransactionHash(response!.transactionHash)
+    /* setTransactionHash(response!.transactionHash) */
     setLoading(false)
   }
 
