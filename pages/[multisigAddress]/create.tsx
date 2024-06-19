@@ -207,10 +207,7 @@ const ProposalCreate: NextPage = () => {
     <WalletLoader>
       <div className="flex flex-col w-full pb-12">
         <div className="grid bg-base-100 place-items-center cursor-default">
-          <form
-            className="text-left container mx-auto max-w-lg"
-            onSubmit={handleSubmit}
-          >
+          <form className="text-left container mx-auto" onSubmit={handleSubmit}>
             <h1 className="text-4xl my-8 text-bold">Create Proposal</h1>
             <label className="block mb-2">Title</label>
             <input

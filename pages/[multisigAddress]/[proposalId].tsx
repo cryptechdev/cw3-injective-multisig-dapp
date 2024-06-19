@@ -290,38 +290,52 @@ const Proposal: NextPage = () => {
 
   // Decode the Base64 string back to JSON
   const decodeFromBase64 = (base64String: string) => {
-    return JSON.parse(atob(base64String))
+    try {
+      const decodedString = atob(base64String)
+      return JSON.parse(decodedString)
+    } catch (error) {
+      console.error('Failed to decode JSON from Base64:', error)
+      throw new Error('Invalid JSON format.')
+    }
   }
 
   // Decode the messages in the proposal
   const decodedMessages =
     proposal?.msgs?.map((item: any) => {
-      if (item.wasm) {
-        if (item.wasm.execute && item.wasm.execute.msg) {
-          return {
-            ...item,
-            wasm: {
-              ...item.wasm,
-              execute: {
-                ...item.wasm.execute,
-                msg: decodeFromBase64(item.wasm.execute.msg),
+      try {
+        if (item.wasm) {
+          if (item.wasm.execute && item.wasm.execute.msg) {
+            return {
+              ...item,
+              wasm: {
+                ...item.wasm,
+                execute: {
+                  ...item.wasm.execute,
+                  msg: decodeFromBase64(item.wasm.execute.msg),
+                },
               },
-            },
-          }
-        } else if (item.wasm.instantiate && item.wasm.instantiate.msg) {
-          return {
-            ...item,
-            wasm: {
-              ...item.wasm,
-              instantiate: {
-                ...item.wasm.instantiate,
-                msg: decodeFromBase64(item.wasm.instantiate.msg),
+            }
+          } else if (item.wasm.instantiate && item.wasm.instantiate.msg) {
+            return {
+              ...item,
+              wasm: {
+                ...item.wasm,
+                instantiate: {
+                  ...item.wasm.instantiate,
+                  msg: decodeFromBase64(item.wasm.instantiate.msg),
+                },
               },
-            },
+            }
           }
         }
+        return item
+      } catch (error) {
+        console.error('Error decoding message:', error)
+        return {
+          ...item,
+          error: 'Failed to decode message',
+        }
       }
-      return item
     }) || []
 
   const prettyPrint = (data: any) => {
@@ -330,8 +344,8 @@ const Proposal: NextPage = () => {
   }
 
   // Check if proposal and proposal.msgs are defined
-  const encodedMsgs = proposal?.msgs ? encodeToBase64(proposal.msgs) : ''
-  const decodedMsgs = encodedMsgs ? decodeFromBase64(encodedMsgs) : []
+  /*   const encodedMsgs = proposal?.msgs ? encodeToBase64(proposal.msgs) : ''
+  const decodedMsgs = encodedMsgs ? decodeFromBase64(encodedMsgs) : [] */
 
   return (
     <WalletLoader loading={loading}>
@@ -342,7 +356,7 @@ const Proposal: NextPage = () => {
               No proposal with that ID found.
             </div>
           ) : (
-            <div className="container mx-auto max-w-lg text-left">
+            <div className="container mx-auto text-left">
               <div className="card-title flex flex-row justify-between m-0 cursor-default">
                 <div>{proposal.title}</div>
                 {proposal.status === 'passed' && (
@@ -371,17 +385,17 @@ const Proposal: NextPage = () => {
                 </div>
               </div>
               <p className="my-8 cursor-default">{proposal.description}</p>
-              <span className="flex pb-1">JSON Message</span>
+              <span className="flex pb-1">Message</span>
               <div className="p-2 border border-black rounded mb-4">
                 <code className="break-all">
                   {JSON.stringify(proposal.msgs)}
                 </code>
               </div>
-              <span className="flex pb-1">Base64</span>
+              {/* <span className="flex pb-1">Base64</span>
               <div className="p-2 border border-black rounded mb-4">
                 <code className="break-all">{encodedMsgs}</code>
-              </div>
-              <span className="flex pb-1">Pretty</span>
+              </div> */}
+              <span className="flex pb-1">Decoded</span>
               {/* <div className="p-2 border border-black rounded">
                 <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
                   {prettyPrint(proposal?.msgs)}

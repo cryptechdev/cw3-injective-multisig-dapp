@@ -119,7 +119,7 @@ const Home: NextPage = () => {
   return (
     <WalletLoader loading={reversedProposals.length === 0 && loading}>
       <div className="w-full cursor-default">
-        <div className="flex flex-col w-full max-w-[1200px] m-auto px-16">
+        <div className="flex flex-col w-full max-w-[1800px] m-auto px-16">
           <div className="flex flex-col items-center my-16 px-8 gap-4">
             <h1 className="text-xl font-bold sm:text-5xl">{label}</h1>
             <h1 className="text-md sm:text-2xl">{address}</h1>
