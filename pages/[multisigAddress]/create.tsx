@@ -20,8 +20,9 @@ interface ProposalFormElement extends HTMLFormElement {
   readonly elements: FormElements
 }
 
-const encodeToBase64 = (data: string) => {
-  return window.btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+const encodeToBase64 = (data: any) => {
+  const jsonString = data
+  return window.btoa(unescape(encodeURIComponent(jsonString)))
 }
 
 const decodeFromBase64 = (base64String: string) => {
@@ -29,7 +30,7 @@ const decodeFromBase64 = (base64String: string) => {
     return JSON.parse(decodeURIComponent(escape(window.atob(base64String))))
   } catch (error) {
     console.error('Error decoding base64:', error)
-    return null
+    return 'Error decoding base64'
   }
 }
 
@@ -47,9 +48,9 @@ const ProposalCreate: NextPage = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [proposalID, setProposalID] = useState('')
-  const [dataType, setDataType] = useState<'json' | 'base64' | 'unknown'>(
-    'unknown'
-  )
+  const [dataType, setDataType] = useState<
+    'json' | 'base64' | 'jsonArray' | 'unknown'
+  >('unknown')
 
   const [formData, setFormData] = useState({
     label: '',
@@ -67,10 +68,15 @@ const ProposalCreate: NextPage = () => {
     })
   }
 
-  const detectJsonOrBase64 = (str: string): 'json' | 'base64' | 'unknown' => {
+  const detectJsonOrBase64 = (
+    str: string
+  ): 'json' | 'base64' | 'jsonArray' | 'unknown' => {
     try {
       // Try to parse the string as JSON
-      JSON.parse(str)
+      const parsedJson = JSON.parse(str)
+      if (Array.isArray(parsedJson)) {
+        return 'jsonArray'
+      }
       return 'json'
     } catch (error) {
       // If parsing as JSON fails, check if it's base64-encoded
@@ -91,22 +97,63 @@ const ProposalCreate: NextPage = () => {
   }
 
   const { json } = formData
+  const [decodedMsgs, setDecodedMsgs] = useState('')
   const [encodedMsgs, setEncodedMsgs] = useState('')
-  const [decodedMsgs, setDecodedMsgs] = useState<any[]>([])
-  const [prettyMsgs, setPrettyMsgs] = useState('')
+  const [jsonRaw, setJsonRaw] = useState<any[]>([])
 
   useEffect(() => {
     const dataType = detectJsonOrBase64(json)
     setDataType(dataType)
 
-    const encoded = encodeToBase64(json)
+    const jsonRaw = dataType === 'jsonArray' ? JSON.parse(json) : []
+    const encoded = dataType === 'json' ? encodeToBase64(json) : ''
     const decoded = decodeFromBase64(json)
-    const pretty = prettyPrint(json)
 
-    setEncodedMsgs(encoded)
+    setJsonRaw(jsonRaw)
     setDecodedMsgs(decoded)
-    setPrettyMsgs(pretty)
+    setEncodedMsgs(encoded)
   }, [json])
+
+  // Decode the messages in the proposal
+  const decodedMessages =
+    dataType === 'jsonArray' && jsonRaw !== null
+      ? jsonRaw.map((item: any) => {
+          try {
+            if (item.wasm) {
+              if (item.wasm.execute && item.wasm.execute.msg) {
+                return {
+                  ...item,
+                  wasm: {
+                    ...item.wasm,
+                    execute: {
+                      ...item.wasm.execute,
+                      msg: decodeFromBase64(item.wasm.execute.msg),
+                    },
+                  },
+                }
+              } else if (item.wasm.instantiate && item.wasm.instantiate.msg) {
+                return {
+                  ...item,
+                  wasm: {
+                    ...item.wasm,
+                    instantiate: {
+                      ...item.wasm.instantiate,
+                      msg: decodeFromBase64(item.wasm.instantiate.msg),
+                    },
+                  },
+                }
+              }
+            }
+            return item
+          } catch (error) {
+            console.error('Error decoding message:', error)
+            return {
+              ...item,
+              error: 'Failed to decode message',
+            }
+          }
+        })
+      : []
 
   const handleSubmit = async (event: FormEvent<ProposalFormElement>) => {
     event.preventDefault()
@@ -223,8 +270,7 @@ const ProposalCreate: NextPage = () => {
             />
             <label className="block mt-4 mb-2">Message</label>
             <textarea
-              className="input input-bordered rounded box-border p-3 w-full font-mono h-80 focus:input-primary text-x"
-              cols={7}
+              className="input input-bordered rounded box-border p-3 w-full font-mono h-[440px] focus:input-primary text-x"
               name="json"
               readOnly={complete}
               onChange={handleChange}
@@ -236,33 +282,25 @@ const ProposalCreate: NextPage = () => {
             </div>
             {dataType === 'json' && (
               <div className="flex flex-col gap-2 pt-2">
-                <span className="pt-4">Base64 Encoded</span>
+                <span className="pt-4">Encoded as Base64</span>
                 <div className="p-2 border border-black rounded">
                   <code className="break-all">{encodedMsgs}</code>
                 </div>
               </div>
             )}
-            {dataType === 'base64' && (
+            {dataType === 'jsonArray' && (
               <div className="flex flex-col gap-2 pt-2">
-                <span className="pt-4">Base64 Decoded</span>
-                <div className="p-2 border border-black rounded">
-                  <code className="break-all">{decodedMsgs}</code>
-                </div>
-              </div>
-            )}
-            {dataType === 'json' && (
-              <div className="flex flex-col gap-2 pt-2">
-                <span className="pt-4">Pretty</span>
-                <div className="p-2 border border-black rounded">
+                <span className="pt-4">Decoded</span>
+                <div className="p-2 border border-black rounded mb-8">
                   <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
-                    {prettyMsgs}
+                    {prettyPrint(decodedMessages)}
                   </pre>
                 </div>
               </div>
             )}
             {dataType === 'base64' && (
               <div className="flex flex-col gap-2 pt-2">
-                <span className="pt-4">Pretty</span>
+                <span className="pt-4">Decoded</span>
                 <div className="p-2 border border-black rounded">
                   <pre className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
                     {prettyPrint(decodedMsgs)}
