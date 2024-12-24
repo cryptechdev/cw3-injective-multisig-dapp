@@ -11,6 +11,8 @@ type Expiration = {
   at_time: Timestamp
 }
 
+const LIMIT = 2;
+
 const Home: NextPage = () => {
   const router = useRouter()
   const multisigAddress = router.query.multisigAddress as string
@@ -85,11 +87,11 @@ const Home: NextPage = () => {
       .queryContractSmart(multisigAddress, {
         reverse_proposals: {
           ...(startBefore && { start_before: startBefore }),
-          limit: 10,
+          limit: LIMIT,
         },
       })
       .then((response: ProposalListResponse) => {
-        if (response.proposals.length < 10) {
+        if (response.proposals.length < LIMIT) {
           setHideLoadMore(true)
         }
 
